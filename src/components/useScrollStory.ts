@@ -367,7 +367,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
         const figures = boxSection.querySelectorAll('.box-detail');
         const motions: { zoom?: [scale: number, start: string, end: string]; fade?: [start: string, end: string] }[] = [
           { zoom: [1.26, 'top 88%', 'top 23%'] },
-          { zoom: [1.34, 'top 72%', 'top 21%'], fade: ['top 78%', 'top 49%'] },
+          { fade: ['top 78%', 'top 49%'] },
           { zoom: [1.32, 'top 84%', 'top 16%'], fade: ['top 89%', 'top 69%'] },
           { fade: ['top 71%', 'top 52%'] },
           { zoom: [1.35, 'top 75%', 'top 12%'], fade: ['top 80%', 'top 41%'] },

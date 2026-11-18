@@ -725,7 +725,7 @@ test('the box overview fills in order and the adapter fades between its two phot
   await expect(letters.first()).toHaveCSS('opacity', '0.15');
 });
 
-test('the product detail gallery zooms and fades with the scrollbar', async ({ page }) => {
+test('the product detail gallery responds to scroll and the blue photo loops on its own', async ({ page }) => {
   const height = 805;
   await page.setViewportSize({ width: 1470, height });
   await page.goto('/');
@@ -781,13 +781,23 @@ test('the product detail gallery zooms and fades with the scrollbar', async ({ p
   await fading(1);
   await expect(finishes).toHaveCSS('opacity', '1');
   expect(await zoom(0)).toBeGreaterThan(1.1);
-  expect(await zoom(1)).toBeGreaterThan(1.2);
   const firstFade = await alpha(1);
   await seek(0, .18);
   await expect(finishesArtwork).toHaveCSS('opacity', '1');
   await expect(finishes).toHaveCSS('border-top-left-radius', '31% 24%');
   await expect.poll(() => zoom(0)).toBe(1);
-  await expect.poll(() => zoom(1)).toBe(1);
+
+  await expect(finishesArtwork).toHaveCSS('animation-iteration-count', 'infinite');
+  const scrollBeforeZoom = await readScroll(page);
+  await finishesArtwork.evaluate(async node => {
+    const [animation] = node.getAnimations();
+    await animation.ready;
+    animation.currentTime = Number(animation.effect!.getTiming().duration) * .9;
+  });
+  await expect.poll(() => zoom(1)).toBeGreaterThan(1.28);
+  await expect.poll(() => zoom(1)).toBeLessThan(1.07);
+  await expect.poll(() => zoom(1)).toBeGreaterThan(1.08);
+  expect(await readScroll(page)).toBe(scrollBeforeZoom);
 
   for (const [index, before, during, after] of [[2, .93, .78, .14], [3, .76, .61, .49], [5, .90, .70, .09]]) {
     await seek(index, before);
@@ -925,4 +935,5 @@ test('reduced motion exposes every chapter without pinning', async ({ page }) =>
   await expect(page.getByRole('group', { name: 'pen finish' })).toBeHidden();
   await expect(page.locator('.box-overview .highlight-letter').first()).toHaveCSS('opacity', '1');
   for (const figure of await page.locator('.box-detail').all()) await expect(figure).toHaveCSS('opacity', '1');
+  await expect(page.locator('.box-detail').nth(1).locator('.artwork')).toHaveCSS('animation-name', 'none');
 });
