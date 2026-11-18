@@ -21,7 +21,7 @@ In a second terminal, run `npm run dev`. Open [the homepage](http://127.0.0.1:30
 
 If port 5432 is already in use, publish the Docker database on 5433 by using `-p 127.0.0.1:5433:5432`, then run `DATABASE_URL=postgresql://nota@127.0.0.1:5433/nota npm run env:local`. To resume a stopped project database, run `docker start nota-postgres`.
 
-Strapi seeds an empty database with one published Homepage and 33 Media Library uploads on the first start. The seed reuses named uploads on retry and preserves any existing homepage draft or publication. Set `SEED_HOMEPAGE=false` after the initial publish if you want an empty database to require manual initialization. The shared seed inputs live in `src/content/homepage.ts` and `public/images`.
+Strapi seeds an empty database with one published Homepage and 34 Media Library uploads on the first start. The seed reuses named uploads on retry and preserves any existing homepage draft or publication. Set `SEED_HOMEPAGE=false` after the initial publish if you want an empty database to require manual initialization. The shared seed inputs live in `src/content/homepage.ts` and `public/images`.
 
 For independent frontend development, run `CONTENT_SOURCE=local npm run dev`. CMS mode reads only published Strapi content. If the CMS is unavailable, the page shows a service error and the readiness endpoint returns 503.
 

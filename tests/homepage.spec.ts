@@ -688,6 +688,77 @@ test('the box overview fills in order and the adapter fades between its two phot
   await expect(letters.first()).toHaveCSS('opacity', '0.15');
 });
 
+test('the product detail gallery zooms and fades with the scrollbar', async ({ page }) => {
+  const height = 805;
+  await page.setViewportSize({ width: 1470, height });
+  await page.goto('/');
+  await expect(page.locator('.pin-spacer')).toHaveCount(6);
+  await page.evaluate(() => document.fonts.ready);
+
+  const gallery = page.locator('.box-callouts');
+  const figures = gallery.locator('.box-detail');
+  await expect(gallery).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  const gap = await gallery.evaluate(section =>
+    section.getBoundingClientRect().top - section.previousElementSibling!.querySelector('.box-items')!.getBoundingClientRect().bottom);
+  expect(gap).toBeCloseTo(41, 0);
+
+  const frames = await figures.evaluateAll(nodes => nodes.map(node => {
+    const rect = node.getBoundingClientRect();
+    return { top: rect.top + scrollY, bottom: rect.bottom + scrollY, x: rect.x, width: rect.width };
+  }));
+  expect(frames[0].top).toBeCloseTo(frames[1].top, 0);
+  expect(frames[2].bottom).toBeCloseTo(frames[1].bottom, 0);
+  expect(frames[2].x + frames[2].width).toBeCloseTo(frames[0].x + frames[0].width, 0);
+  expect(frames[3].top).toBeGreaterThan(frames[2].bottom);
+  expect(frames[4].top).toBeCloseTo(frames[5].top, 0);
+  expect(frames[3].width).toBeGreaterThan(frames[4].width);
+
+  const seek = (index: number, inset: number) => page.evaluate(top => scrollTo({ top, behavior: 'instant' }), frames[index].top - height * inset);
+  const zoom = (index: number) => figures.nth(index).locator('.artwork').evaluate(node => {
+    const transform = getComputedStyle(node).transform;
+    return transform === 'none' ? 1 : new DOMMatrixReadOnly(transform).a;
+  });
+  const alpha = (index: number) => figures.nth(index).evaluate(node => Number(getComputedStyle(node).opacity));
+  const fading = (index: number) => expect.poll(async () => {
+    const opacity = await alpha(index);
+    return opacity > .08 && opacity < .95;
+  }).toBe(true);
+
+  await seek(0, .84);
+  await expect.poll(() => zoom(0)).toBeGreaterThan(1.2);
+  await expect(figures.nth(1)).toHaveCSS('opacity', '0');
+  await seek(0, .64);
+  await fading(1);
+  expect(await zoom(0)).toBeGreaterThan(1.1);
+  expect(await zoom(1)).toBeGreaterThan(1.2);
+  const firstFade = await alpha(1);
+  await seek(0, .18);
+  await expect(figures.nth(1)).toHaveCSS('opacity', '1');
+  await expect.poll(() => zoom(0)).toBe(1);
+  await expect.poll(() => zoom(1)).toBe(1);
+
+  for (const [index, before, during, after] of [[2, .93, .78, .14], [3, .76, .61, .49], [5, .90, .70, .09]]) {
+    await seek(index, before);
+    await expect(figures.nth(index)).toHaveCSS('opacity', '0');
+    await seek(index, during);
+    await fading(index);
+    if (index !== 3) expect(await zoom(index)).toBeGreaterThan(1.18);
+    if (index === 5) expect(await zoom(4)).toBeGreaterThan(1.18);
+    await seek(index, after);
+    await expect(figures.nth(index)).toHaveCSS('opacity', '1');
+    await expect.poll(() => zoom(index)).toBe(1);
+  }
+  await expect.poll(() => zoom(4)).toBe(1);
+
+  await seek(5, .70);
+  await fading(5);
+  await expect.poll(() => zoom(4)).toBeGreaterThan(1.18);
+  await seek(0, .64);
+  await expect.poll(() => alpha(1)).toBeCloseTo(firstFade, 3);
+  await seek(0, .84);
+  await expect(figures.nth(1)).toHaveCSS('opacity', '0');
+});
+
 test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
@@ -800,4 +871,5 @@ test('reduced motion exposes every chapter without pinning', async ({ page }) =>
   }
   await expect(page.getByRole('group', { name: 'pen finish' })).toBeHidden();
   await expect(page.locator('.box-overview .highlight-letter').first()).toHaveCSS('opacity', '1');
+  for (const figure of await page.locator('.box-detail').all()) await expect(figure).toHaveCSS('opacity', '1');
 });

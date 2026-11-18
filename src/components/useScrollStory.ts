@@ -361,6 +361,35 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
         }
       }
 
+      function revealDetailGallery() {
+        const figures = boxSection.querySelectorAll('.box-detail');
+        const motions: { zoom?: [scale: number, start: string, end: string]; fade?: [start: string, end: string] }[] = [
+          { zoom: [1.26, 'top 88%', 'top 23%'] },
+          { zoom: [1.34, 'top 72%', 'top 21%'], fade: ['top 78%', 'top 49%'] },
+          { zoom: [1.32, 'top 84%', 'top 16%'], fade: ['top 89%', 'top 69%'] },
+          { fade: ['top 71%', 'top 52%'] },
+          { zoom: [1.35, 'top 75%', 'top 12%'], fade: ['top 80%', 'top 41%'] },
+          { zoom: [1.35, 'top 75%', 'top 12%'], fade: ['top 86%', 'top 56%'] },
+        ];
+
+        motions.forEach(({ zoom, fade }, index) => {
+          const figure = figures[index];
+          if (!figure) return;
+          if (zoom) {
+            const [scale, start, end] = zoom;
+            gsap.fromTo(figure.querySelector('.artwork'), { scale }, {
+              scale: 1, ease: 'none', scrollTrigger: { trigger: figure, start, end, scrub: true },
+            });
+          }
+          if (fade) {
+            const [start, end] = fade;
+            gsap.fromTo(figure, { opacity: 0 }, {
+              opacity: 1, ease: 'sine.inOut', scrollTrigger: { trigger: figure, start, end, scrub: true },
+            });
+          }
+        });
+      }
+
       function pinFinishes() {
         const stage = select('.finish-frame');
         const slides = Array.from(stage.querySelectorAll<HTMLElement>('.chapter-slide'));
@@ -386,6 +415,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
         opacity: 1, duration: .04, stagger: { amount: .96 }, ease: 'none',
         scrollTrigger: { trigger: overview, start: 'top 85%', end: 'top 23%', scrub: true },
       });
+      if (!mobile) revealDetailGallery();
       pinFinishes();
       updateProgress();
 
