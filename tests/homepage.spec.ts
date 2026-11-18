@@ -77,11 +77,11 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
       const paperControls = page.getByRole('group', { name: 'Smartpaper chapter' });
       await expect(paperControls.locator('[aria-current]')).toHaveAccessibleName('For the pen, it’s a precise map');
       const first = await readScroll(page);
-      await paperControls.getByRole('button', { name: 'Next Smartpaper chapter' }).click();
+      await paperControls.getByRole('button', { name: 'For you, it’s just a blank sheet' }).click();
       await expect(paperControls.locator('[aria-current]')).toHaveAccessibleName('For you, it’s just a blank sheet');
       expect(await readScroll(page)).toBeGreaterThan(first);
       await expectPinned(paper);
-      await paperControls.getByRole('button', { name: 'Previous Smartpaper chapter' }).click();
+      await paperControls.getByRole('button', { name: 'For the pen, it’s a precise map' }).click();
       await expect(paperControls.locator('[aria-current]')).toHaveAccessibleName('For the pen, it’s a precise map');
       await expect.poll(() => readScroll(page)).toBeLessThan(first + (paperBounds.end - paperBounds.start) * .08);
 
@@ -479,6 +479,84 @@ test('the pinned Smartpaper heading fades into dividers and a stepped notebook r
   await expect(title).toHaveCSS('opacity', '1');
 });
 
+test('Smartpaper scales the chapter images and fades to black before the white dot', async ({ page }) => {
+  const height = 805;
+  await page.setViewportSize({ width: 1470, height });
+  await page.goto('/');
+  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+  const stage = page.locator('#smartpaper');
+  const slides = stage.locator('.paper-slide');
+  const startingImage = slides.first().locator('.artwork');
+  const nextImage = slides.nth(1).locator('.artwork');
+  const startingTitle = slides.first().locator('.paper-title');
+  const nextTitle = slides.nth(1).locator('.paper-title');
+  const firstCaption = slides.first().locator('.paper-caption');
+  const controls = stage.getByRole('group', { name: 'Smartpaper chapter' });
+  const opacity = (locator: Locator) => locator.evaluate(node => Number(getComputedStyle(node).opacity));
+  const { start } = await scrollInScene(stage, 0);
+  const seek = (offset: number) => page.evaluate(top => scrollTo({ top, behavior: 'instant' }), start + offset * height);
+
+  await seek(1.59);
+  await expectPinned(stage);
+  await expect(controls.getByRole('button')).toHaveCount(4);
+  const captionHeading = (await firstCaption.locator('h4').boundingBox())!;
+  const captionBody = (await firstCaption.locator('p').boundingBox())!;
+  expect(captionBody.y - captionHeading.y - captionHeading.height).toBeCloseTo(1);
+  expect(captionBody.width).toBeCloseTo(captionHeading.width);
+
+  await seek(2.00);
+  await expect.poll(() => opacity(startingImage)).toBeLessThan(.9);
+  expect(await opacity(nextImage)).toBeGreaterThan(.08);
+  expect((await startingImage.boundingBox())!.width).toBeLessThan(1470 * .96);
+  const enteringWidth = (await nextImage.boundingBox())!.width;
+  expect(enteringWidth).toBeGreaterThan(1470 * 1.1);
+  await expect(startingTitle).toHaveCSS('opacity', '1');
+  await expect(nextTitle).toBeHidden();
+
+  await seek(2.06);
+  await expect(startingTitle).toBeHidden();
+  await expect(nextTitle).toHaveCSS('opacity', '1');
+  await expect(controls.locator('[aria-current]')).toHaveAccessibleName('For you, it’s just a blank sheet');
+  expect((await nextImage.boundingBox())!.width).toBeLessThan(enteringWidth);
+  expect(await opacity(nextImage)).toBeLessThan(1);
+
+  const finalTitle = slides.last().locator('.paper-title');
+  const finalCaption = slides.last().locator('.paper-caption');
+  const finalImage = slides.last().locator('.artwork');
+  const dot = stage.locator('.paper-wipe');
+
+  await seek(4.775);
+  await expect.poll(() => opacity(finalTitle)).toBeLessThan(.95);
+  await expect(finalCaption).toHaveCSS('opacity', '1');
+  await expect(finalImage).toHaveCSS('opacity', '1');
+  await seek(4.87);
+  await expect(finalTitle).toHaveCSS('opacity', '0');
+  await expect.poll(() => opacity(finalCaption)).toBeLessThan(.6);
+  await expect(finalImage).toHaveCSS('opacity', '1');
+  await seek(4.99);
+  await expect(finalCaption).toHaveCSS('opacity', '0');
+  await expect.poll(() => opacity(finalImage)).toBeLessThan(.4);
+  await seek(5.08);
+  await expect(finalImage).toHaveCSS('opacity', '0');
+  await expect(stage.locator('.paper-story')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  await expect(controls).toBeHidden();
+  await expect(dot).toHaveCSS('clip-path', 'circle(0% at 50% 50%)');
+
+  await seek(5.20);
+  await expect(dot).not.toHaveCSS('clip-path', 'circle(0% at 50% 50%)');
+  const small = await dot.evaluate(node => parseFloat(getComputedStyle(node).clipPath.slice(7)));
+  expect(small).toBeLessThan(4);
+  await seek(5.42);
+  await expect.poll(() => dot.evaluate(node => parseFloat(getComputedStyle(node).clipPath.slice(7)))).toBeGreaterThan(20);
+
+  await seek(4.23);
+  await expectPinned(stage);
+  await expect(finalTitle).toHaveCSS('opacity', '1');
+  await expect(finalCaption).toHaveCSS('opacity', '1');
+  await expect(finalImage).toHaveCSS('opacity', '1');
+  await expect(controls.locator('[aria-current]')).toHaveAccessibleName('Your notes. Already there.');
+});
+
 test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
@@ -489,11 +567,11 @@ test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page 
   const controls = page.getByRole('group', { name: 'Smartpaper chapter' });
   await expect(controls.locator('[aria-current]')).toHaveAccessibleName('For the pen, it’s a precise map');
   await page.mouse.move(340, 430);
-  await page.mouse.wheel(0, 970);
+  await page.mouse.wheel(0, 730);
   await expect(controls.locator('[aria-current]')).toHaveAccessibleName('For you, it’s just a blank sheet');
   await expectPinned(paper);
   await expect(page.locator('html')).not.toHaveClass(/lenis-smooth/);
-  await page.mouse.wheel(0, -970);
+  await page.mouse.wheel(0, -730);
   await expect(controls.locator('[aria-current]')).toHaveAccessibleName('For the pen, it’s a precise map');
   await expectPinned(paper);
 });

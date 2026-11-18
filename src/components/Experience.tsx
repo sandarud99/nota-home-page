@@ -71,26 +71,27 @@ function Manifesto({ text }: { text: string }) {
   </section>;
 }
 
-function SceneControls({ index, titles, label, select }: {
+function SceneControls({ index, titles, label, select, arrows = true }: {
   index: number;
   titles: string[];
   label: string;
   select: (index: number) => void;
+  arrows?: boolean;
 }) {
   if (titles.length < 2) return null;
   return <div className="scene-controls" role="group" aria-label={label}>
-    <button type="button" className="scene-arrow" aria-label={`Previous ${label}`}
+    {arrows && <button type="button" className="scene-arrow" aria-label={`Previous ${label}`}
       aria-disabled={index === 0} onClick={() => index > 0 && select(index - 1)}>
       <ArrowLeft size={17} aria-hidden="true" />
-    </button>
+    </button>}
     <div className="scene-steps">
       {titles.map((title, i) => <button type="button" key={i} aria-label={title}
         aria-current={i === index ? 'step' : undefined} onClick={() => select(i)}><span /></button>)}
     </div>
-    <button type="button" className="scene-arrow" aria-label={`Next ${label}`}
+    {arrows && <button type="button" className="scene-arrow" aria-label={`Next ${label}`}
       aria-disabled={index === titles.length - 1} onClick={() => index < titles.length - 1 && select(index + 1)}>
       <ArrowRight size={17} aria-hidden="true" />
-    </button>
+    </button>}
   </div>;
 }
 
@@ -318,9 +319,12 @@ export default function Experience({ data: d }: { data: Homepage }) {
           {d.paperDetails.map((item, i) => <article className="chapter-slide paper-slide" key={item.id ?? i}>
             <ImageView artwork={item} fallback="/art/notebook.svg" />
             <h3 className="chapter-copy paper-title">{item.title}</h3>
-            <div className="chapter-copy paper-caption"><h4>{item.caption}</h4><p>{item.description}</p></div>
+            <div className="chapter-copy paper-caption">
+              <h4>{item.caption}</h4>
+              <p>{item.description}</p>
+            </div>
           </article>)}
-          <SceneControls index={active.paper} titles={d.paperDetails.map(item => item.caption)} label="Smartpaper chapter"
+          <SceneControls index={active.paper} titles={d.paperDetails.map(item => item.caption)} label="Smartpaper chapter" arrows={false}
             select={index => goToScene('paper', index)} />
           <Wipe panels={wipeColumns} className="scene-wipe paper-entry-wipe" />
           <div className="paper-wipe" aria-hidden="true" />

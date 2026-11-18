@@ -62,7 +62,12 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
         return;
       }
       const mobile = Boolean(conditions?.mobile);
-      const smooth = new Lenis({ lerp: 0.16, smoothWheel: true, syncTouch: false });
+      const smooth = new Lenis({
+        lerp: 0.16,
+        smoothWheel: true,
+        syncTouch: false,
+        prevent: node => node.classList.contains('paper-caption') && node.scrollHeight > node.clientHeight,
+      });
       lenis.current = smooth;
       smooth.on('scroll', ScrollTrigger.update);
       const tick = (time: number) => smooth.raf(time * 1000);
@@ -273,17 +278,23 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
           .to(panel, { opacity: 0, duration: .11 }, '>');
       }
 
-      function pinDeck(name: 'paper' | 'finishes', stage: HTMLElement, screens: number) {
-        const slides = Array.from(stage.querySelectorAll<HTMLElement>('.chapter-slide'));
-        const desktopPaper = name === 'paper' && !mobile;
-        const first = desktopPaper ? 1.65 : 0;
-        const step = desktopPaper ? screens : 1;
+      function pinPaper() {
+        const story = select('.paper-story');
+        const stage = mobile ? story : smartpaper;
+        const slides = Array.from(stage.querySelectorAll<HTMLElement>('.paper-slide'));
+        const artwork = slides.map(slide => slide.querySelector('.artwork')!);
+        const copy = slides.map(slide => slide.querySelectorAll('.chapter-copy'));
+        const controls = stage.querySelector('.scene-controls');
+        const first = mobile ? 0 : 1.59;
+        const step = mobile ? 1 : .88;
         const last = first + (slides.length - 1) * step;
-        const distance = desktopPaper ? last + .48 : Math.max(1, slides.length - 1) * screens;
-        const timeline = pin(stage, distance, desktopPaper ? trigger => {
+        const dotStart = last + .88;
+        const dotDuration = .54;
+        const distance = mobile ? Math.max(1, slides.length - 1) * .52 : dotStart + dotDuration;
+        const timeline = pin(stage, distance, mobile ? undefined : trigger => {
           if (pendingAnchor === smartpaper) pendingAnchorTop = trigger.start;
-        } : undefined);
-        if (desktopPaper) {
+        });
+        if (!mobile) {
           const panels = Array.from(stage.querySelectorAll('.paper-entry-wipe i'));
           const dividers = panels.slice(0, -1).reverse();
           const panelStarts = [.72, .78, .835, .88, .925, .97];
@@ -292,15 +303,43 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
             .to(select('#smartpaper > .section-title'), { opacity: 0, duration: .20 }, 0)
             .to(dividers, { '--paper-divider': 1, duration: .19, stagger: .05, ease: 'sine.inOut' }, .23)
             .fromTo(slides[0], { autoAlpha: 0 }, { autoAlpha: 1, duration: .43, ease: 'power1.out' }, .76)
-            .fromTo(stage.querySelector('.scene-controls'), { autoAlpha: 0 }, { autoAlpha: 1, duration: .12 }, panelEnd);
+            .fromTo(controls, { autoAlpha: 0 }, { autoAlpha: 1, duration: .12 }, panelEnd);
           // Start at the left and let all six panels clear the stage together.
           panels.forEach((panel, index) => {
             const start = panelStarts[index];
             timeline.to(panel, { yPercent: 100, duration: panelEnd - start, ease: 'sine.inOut' }, start);
           });
         }
+        artwork.slice(1).forEach((image, index) => {
+          const midpoint = first + (index + .5) * step;
+          const blend = .17;
+          const swap = .028;
+          timeline
+            .to(artwork[index], { scale: .62, autoAlpha: 0, duration: blend, ease: 'sine.inOut' }, midpoint - blend / 2)
+            .fromTo(image, { scale: 1.40, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: blend, ease: 'sine.inOut' }, midpoint - blend / 2)
+            .to(copy[index], { autoAlpha: 0, duration: swap }, midpoint - swap / 2)
+            .fromTo(copy[index + 1], { autoAlpha: 0 }, { autoAlpha: 1, duration: swap }, midpoint - swap / 2);
+        });
+        timeline.to({}, { duration: .08 }, last);
+        if (!mobile) {
+          const finalSlide = slides.at(-1)!;
+          timeline
+            .to(finalSlide.querySelector('.paper-title'), { autoAlpha: 0, duration: .105, ease: 'power1.inOut' }, last + .52)
+            .to([finalSlide.querySelector('.paper-caption'), controls], { autoAlpha: 0, duration: .18, ease: 'power1.out' }, last + .56)
+            .to(artwork.at(-1)!, { autoAlpha: 0, duration: .16, ease: 'power2.out' }, last + .67)
+            .to(story, { backgroundColor: '#000', duration: .16, ease: 'power2.out' }, '<')
+            .to(stage.querySelector('.paper-wipe'), { clipPath: 'circle(72% at 50% 50%)', duration: dotDuration, ease: 'power1.in' }, dotStart);
+        }
+        track('paper', timeline, slides.length, first / timeline.duration(), last / timeline.duration());
+      }
+
+      function pinFinishes() {
+        const stage = select('.finish-frame');
+        const slides = Array.from(stage.querySelectorAll<HTMLElement>('.chapter-slide'));
+        const last = slides.length - 1;
+        const timeline = pin(stage, Math.max(1, last) * (mobile ? .42 : .79));
         slides.slice(1).forEach((slide, offset) => {
-          const index = first + (offset + 1) * step;
+          const index = offset + 1;
           const previous = slides[offset];
           timeline
             .to(previous.querySelectorAll('.chapter-copy'), { autoAlpha: 0, y: -12, duration: .21 }, index - .78)
@@ -309,16 +348,11 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
             .fromTo(slide.querySelectorAll('.chapter-copy'), { autoAlpha: 0, y: 13 }, { autoAlpha: 1, y: 0, duration: .29 }, index - .54);
         });
         timeline.to({}, { duration: .08 }, last);
-        if (desktopPaper) {
-          timeline.fromTo(stage.querySelector('.paper-wipe'), { clipPath: 'circle(0% at 50% 50%)' }, {
-            clipPath: 'circle(76% at 50% 50%)', duration: .37,
-          }, last + .11);
-        }
-        track(name, timeline, slides.length, first / timeline.duration(), Math.max(.01, last / timeline.duration()));
+        track('finishes', timeline, slides.length, 0, Math.max(.01, last / timeline.duration()));
       }
 
-      pinDeck('paper', mobile ? select('.paper-story') : smartpaper, mobile ? .52 : 1.08);
-      pinDeck('finishes', select('.finish-frame'), mobile ? .42 : .79);
+      pinPaper();
+      pinFinishes();
       updateProgress();
 
       return () => {
