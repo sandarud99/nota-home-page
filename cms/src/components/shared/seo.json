@@ -2,7 +2,7 @@
   "collectionName": "components_shared_seo",
   "info": {
     "displayName": "Search and social metadata",
-    "description": "Homepage metadata and social preview image."
+    "description": "Search, social preview, browser icon, and structured data settings for the homepage."
   },
   "attributes": {
     "metaTitle": {
@@ -15,30 +15,193 @@
       "required": true,
       "maxLength": 320
     },
+    "canonicalUrl": {
+      "type": "string",
+      "regex": "^https://[^\\s]+$",
+      "maxLength": 2048
+    },
+    "keywords": {
+      "type": "text",
+      "maxLength": 1000
+    },
+    "ogTitle": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "ogDescription": {
+      "type": "text",
+      "maxLength": 320
+    },
+    "ogSiteName": {
+      "type": "string",
+      "maxLength": 120
+    },
     "ogImage": {
       "type": "media",
       "multiple": false,
       "required": true,
-      "allowedTypes": [
-        "images"
-      ]
+      "allowedTypes": ["images"]
+    },
+    "ogImageAlt": {
+      "type": "string",
+      "maxLength": 420
+    },
+    "twitterCard": {
+      "type": "enumeration",
+      "enum": ["summary_large_image", "summary"]
+    },
+    "twitterSite": {
+      "type": "string",
+      "regex": "^@[A-Za-z0-9_]{1,15}$"
+    },
+    "twitterTitle": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "twitterDescription": {
+      "type": "text",
+      "maxLength": 320
+    },
+    "twitterImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
+    },
+    "twitterImageAlt": {
+      "type": "string",
+      "maxLength": 420
+    },
+    "siteIcon": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
+    },
+    "googleVerification": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "bingVerification": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "structuredData": {
+      "type": "json"
     }
   },
   "config": {
     "metadatas": {
       "metaTitle": {
         "edit": {
-          "label": "Page title"
+          "label": "Page title",
+          "description": "The title in the browser tab and the default title for link previews."
         }
       },
       "metaDescription": {
         "edit": {
-          "label": "Page description"
+          "label": "Page description",
+          "description": "A short summary of the homepage for search metadata and link previews."
+        }
+      },
+      "canonicalUrl": {
+        "edit": {
+          "label": "Canonical homepage URL",
+          "description": "The preferred public HTTPS address for this page. Leave empty for local use."
+        }
+      },
+      "keywords": {
+        "edit": {
+          "label": "Meta keywords",
+          "description": "Optional comma-separated terms."
+        }
+      },
+      "ogTitle": {
+        "edit": {
+          "label": "Open Graph title",
+          "description": "Optional title for link previews. Defaults to the page title."
+        }
+      },
+      "ogDescription": {
+        "edit": {
+          "label": "Open Graph description",
+          "description": "Optional summary for link previews. Defaults to the page description."
+        }
+      },
+      "ogSiteName": {
+        "edit": {
+          "label": "Open Graph site name",
+          "description": "Optional site name shown in link previews. Defaults to the homepage brand name."
         }
       },
       "ogImage": {
         "edit": {
-          "label": "Social preview image"
+          "label": "Social preview image",
+          "description": "The default image shown when the homepage is shared."
+        }
+      },
+      "ogImageAlt": {
+        "edit": {
+          "label": "Open Graph image alt text",
+          "description": "Describe the share image. Defaults to its Media Library alt text."
+        }
+      },
+      "twitterCard": {
+        "edit": {
+          "label": "X card layout",
+          "description": "Choose a compact card or a large image. Defaults to the large image card."
+        }
+      },
+      "twitterSite": {
+        "edit": {
+          "label": "X account handle",
+          "description": "Optional site account, including the @ sign."
+        }
+      },
+      "twitterTitle": {
+        "edit": {
+          "label": "X card title",
+          "description": "Optional override. Defaults to the Open Graph title."
+        }
+      },
+      "twitterDescription": {
+        "edit": {
+          "label": "X card description",
+          "description": "Optional override. Defaults to the Open Graph description."
+        }
+      },
+      "twitterImage": {
+        "edit": {
+          "label": "X card image",
+          "description": "Optional override. Defaults to the social preview image."
+        }
+      },
+      "twitterImageAlt": {
+        "edit": {
+          "label": "X card image alt text",
+          "description": "Optional description of the X card image."
+        }
+      },
+      "siteIcon": {
+        "edit": {
+          "label": "Browser tab icon",
+          "description": "Choose a square image for the favicon. Defaults to the brand mark."
+        }
+      },
+      "googleVerification": {
+        "edit": {
+          "label": "Google verification token",
+          "description": "Paste the content value from the Google Search Console verification tag."
+        }
+      },
+      "bingVerification": {
+        "edit": {
+          "label": "Bing verification token",
+          "description": "Paste the content value from the Bing Webmaster Tools verification tag."
+        }
+      },
+      "structuredData": {
+        "edit": {
+          "label": "Structured data (JSON-LD)",
+          "description": "Enter a Schema.org JSON object or an array of objects for the homepage."
         }
       }
     }

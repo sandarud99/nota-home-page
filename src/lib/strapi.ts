@@ -49,6 +49,29 @@ export type FormCopy = {
   retryMessage: string;
 };
 
+export type HomepageSeo = {
+  metaTitle: string;
+  metaDescription: string;
+  canonicalUrl?: string | null;
+  keywords?: string | null;
+  ogTitle?: string | null;
+  ogDescription?: string | null;
+  ogSiteName?: string | null;
+  ogImage?: Media | null;
+  ogImageUrl?: string;
+  ogImageAlt?: string | null;
+  twitterCard?: 'summary' | 'summary_large_image' | null;
+  twitterSite?: string | null;
+  twitterTitle?: string | null;
+  twitterDescription?: string | null;
+  twitterImage?: Media | null;
+  twitterImageAlt?: string | null;
+  siteIcon?: Media | null;
+  googleVerification?: string | null;
+  bingVerification?: string | null;
+  structuredData?: Record<string, unknown> | Record<string, unknown>[] | null;
+};
+
 export type Homepage = {
   brand: string;
   headerWordmark: string;
@@ -82,7 +105,7 @@ export type Homepage = {
   footerCredit: string;
   footerProject: string;
   formCopy: FormCopy;
-  seo: { metaTitle: string; metaDescription: string; ogImage?: Media | null; ogImageUrl?: string };
+  seo: HomepageSeo;
 };
 
 const anchors = new Set(['#top', '#main', '#specifications', '#who-its-for', '#about', '#smartpaper', '#inside-the-box', '#finishes']);

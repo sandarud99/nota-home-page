@@ -27,7 +27,7 @@ module.exports = {
         colors: artwork,
         footerLinks: true,
         formCopy: true,
-        seo: { populate: { ogImage: image } },
+        seo: { populate: { ogImage: image, twitterImage: image, siteIcon: image } },
       },
     });
     if (!homepage) return ctx.notFound('Homepage is unpublished.');

@@ -25,6 +25,42 @@ Strapi seeds an empty database with one published Homepage and 32 real Media Lib
 
 For independent frontend development, run `CONTENT_SOURCE=local npm run dev`. CMS mode reads only published Strapi content. If the CMS is unavailable, the page shows a service error and the readiness endpoint returns 503.
 
+## Check the local project
+
+1. Open the homepage, scroll through the product chapters, then scroll back to see the animations reverse. Try the finish selectors and use the browser’s device toolbar to check a phone viewport. [Local homepage](http://127.0.0.1:3000/)
+2. Sign in with your local Strapi admin account. Open **Content Manager → Homepage**, then select **Draft** to edit the content. [Local Strapi admin](http://127.0.0.1:1337/admin)
+3. To verify the form, use the homepage’s order button and send a test message with a test email such as `nota-check@example.test`. Open **Content Manager → Inquiry** in Strapi to see the saved message.
+
+If you have already installed dependencies and generated the local environment files, restart a stopped stack from the repository root with `docker start nota-postgres`, followed by `npm --prefix cms run dev` in one terminal and `npm run dev` in another. Use Node 22 in both terminals. The database and uploads are reused.
+
+### Edit homepage SEO in Strapi
+
+Open **Content Manager → Homepage → Draft → Search and social metadata**. The page title, page description, and social preview image are required. The other fields can be filled or cleared individually.
+
+| Fields | Where they appear |
+| --- | --- |
+| Page title, page description, canonical URL, keywords | Browser tab and page metadata. Use an absolute HTTPS address for the canonical URL when there is a public URL. |
+| Open Graph title, description, site name, preview image and alt text | Link previews. Empty title and description fields inherit the page values. |
+| X card layout, handle, title, description, image and alt text | X link previews. Empty title, description and image fields inherit the Open Graph values. |
+| Browser tab icon | The favicon. Choose an image from the Media Library. |
+| Google and Bing verification | Public verification meta tags. Enter the token from the provider’s HTML tag. |
+| Structured data (JSON-LD) | Schema.org markup. Enter a JSON object or an array of objects. |
+
+Change the **Page title** and click **Save**. Reload the homepage to confirm the browser tab still shows the published title. Click **Publish** in Strapi and reload again to see the new title. In the browser’s developer tools, search **Elements** for `og:title`, `twitter:card`, `rel="canonical"`, or `application/ld+json` to check other published fields. You can also check the published values in the [local homepage API](http://127.0.0.1:1337/api/public-homepage).
+
+Here is a starter JSON-LD object. Replace the name and URL with the page’s public values before publishing it.
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "NŌTA",
+  "url": "https://example.com/"
+}
+```
+
+The assignment requires `noindex, nofollow` on the homepage. Next.js sets those directives independently of the editor fields.
+
 ## Why this stack
 
 Next.js 15 App Router and TypeScript provide server-side content loading, editable metadata, and a same-origin inquiry endpoint. Strapi 5.62 and PostgreSQL handle editing, publication and form persistence. The application retains V3’s GSAP ScrollTrigger and Lenis stack. GSAP timelines follow document scroll, while scene buttons move the document to the matching position. Native touch scrolling uses the same timeline. The reduced-motion layout presents every chapter in document order.
@@ -42,7 +78,7 @@ Content Manager exposes one **Homepage** single type with Draft & Publish and an
 | Smartpaper chapters | Four ordered media scenes, including AI structure and phone synchronization |
 | Box contents and detail gallery | The presentation set, component cards, product overview and annotated macro imagery |
 | Finishes | Chapter images, names, taglines, six-digit background tones and caption contrast |
-| Footer, inquiry copy and SEO | Footer links and credits, form labels and feedback, page metadata and social image |
+| Footer, inquiry copy and SEO | Footer links and credits, form labels and feedback, search metadata, social cards and structured data |
 | Inquiry | Name, email, message and Strapi-managed creation date |
 
 Use **Content Manager → Homepage → Draft** to edit the labelled sections. Upload replacement artwork using the Media Library. Artwork has a main image, optional mobile image and editable alt text. Save the draft, then select **Publish** when it is ready to appear on the homepage. Next.js requests `GET /api/public-homepage` with its cache bypassed. Strapi explicitly populates the nested components and images and returns the published document.
@@ -62,7 +98,7 @@ npm run test:e2e
 
 The Playwright suite covers 320×640, 390×844, 768×1024, 1024×768, 1440×900 and 1920×1080. It checks image decoding, overflow, scroll pins, every scene selector, reversing via wheel and touch, keyboard focus, and reduced motion. With an existing production build running, use `TEST_BASE_URL=http://127.0.0.1:3000 npm run test:e2e`. Setting `PLAYWRIGHT_CHANNEL=chrome` uses installed Google Chrome.
 
-The CMS workflow test exercises editor labels, draft isolation, a real media upload, publication of copy and metadata, and a persisted inquiry from `localhost`. Use a disposable PostgreSQL database for it. Start Strapi with that database’s `DATABASE_URL` and a temporary `STRAPI_PUBLIC_DIR` containing an empty `uploads/` directory. Point the running frontend at that Strapi instance. Set `TEST_CMS_ADMIN_PASSWORD` to a strong password for the synthetic test account, then run the command below. The test restores the original homepage after publishing the test edit.
+The CMS workflow test exercises editor labels, draft isolation, a real media upload, published browser metadata and JSON-LD, and a persisted inquiry from `localhost`. Use a disposable PostgreSQL database for it. Start Strapi with that database’s `DATABASE_URL` and a temporary `STRAPI_PUBLIC_DIR` containing an empty `uploads/` directory. Point the running frontend at that Strapi instance. Set `TEST_CMS_ADMIN_PASSWORD` to a strong password for the synthetic test account, then run the command below. The test restores the original homepage after publishing the test edit.
 
 ```sh
 TEST_BASE_URL=http://127.0.0.1:3000 TEST_CMS_URL=http://127.0.0.1:1337 npm run test:e2e -- tests/cms.spec.ts

@@ -54,6 +54,11 @@ export const getHomepage = cache(async (): Promise<Homepage> => {
     boxItems: data.boxItems.map(withArt),
     boxCallouts: data.boxCallouts.map(withArt),
     colors: data.colors.map(withArt),
-    seo: { ...data.seo, ogImage: resolveMedia(data.seo.ogImage, origin) },
+    seo: {
+      ...data.seo,
+      ogImage: resolveMedia(data.seo.ogImage, origin),
+      twitterImage: data.seo.twitterImage ? resolveMedia(data.seo.twitterImage, origin) : null,
+      siteIcon: data.seo.siteIcon ? resolveMedia(data.seo.siteIcon, origin) : null,
+    },
   };
 });
