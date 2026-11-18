@@ -331,6 +331,7 @@ img { display: block; }
   .box-set { aspect-ratio: 1.92; }
   .box-items .box-item { aspect-ratio: .945; }
   .box-item .box-item-artwork { position: absolute; inset: 0; }
+  .box-items .artwork { height: 100%; }
   .box-item .artwork img { height: 100%; }
   .box-item-copy {
     margin: clamp(16px, 1.36vw, 34px) 2.8% clamp(16px, 1.36vw, 34px) auto;

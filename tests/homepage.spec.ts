@@ -735,9 +735,16 @@ test('the product detail gallery zooms and fades with the scrollbar', async ({ p
   const gallery = page.locator('.box-callouts');
   const figures = gallery.locator('.box-detail');
   await expect(gallery).toHaveCSS('background-color', 'rgb(0, 0, 0)');
-  const gap = await gallery.evaluate(section =>
-    section.getBoundingClientRect().top - section.previousElementSibling!.querySelector('.box-items')!.getBoundingClientRect().bottom);
+  const { gap, imageOffsets } = await gallery.evaluate(section => {
+    const cards = section.previousElementSibling!.querySelector('.box-items')!;
+    const bottom = cards.getBoundingClientRect().bottom;
+    return {
+      gap: section.getBoundingClientRect().top - bottom,
+      imageOffsets: Array.from(cards.querySelectorAll('img'), img => img.getBoundingClientRect().bottom - bottom),
+    };
+  });
   expect(gap).toBeCloseTo(41, 0);
+  for (const offset of imageOffsets) expect(offset).toBeCloseTo(0, 0);
 
   const frames = await figures.evaluateAll(nodes => nodes.map(node => {
     const rect = node.getBoundingClientRect();
