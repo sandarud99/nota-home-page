@@ -45,9 +45,9 @@ function SectionTitle({ id, heading }: { id: string; heading: Heading }) {
   </div>;
 }
 
-function Wipe() {
+function Wipe({ columns = 7 }: { columns?: number }) {
   return <div className="scene-wipe" aria-hidden="true">
-    {Array.from({ length: 7 }, (_, i) => <i key={i} />)}
+    {Array.from({ length: columns }, (_, i) => <i key={i} />)}
   </div>;
 }
 
@@ -168,6 +168,12 @@ export default function Experience({ data: d }: { data: Homepage }) {
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const { active, goToScene, setScrollLocked } = useScrollStory(page);
   const orderLabel = `${d.hero.ctaLabel} ${d.hero.priceLabel} • ${d.hero.price}`;
+  const uploadedProfile = mediaUrl(d.hero.profileImage);
+  const specImage = d.specsArtwork.mobileImage;
+  const specProfile = (specImage?.width ?? d.specsArtwork.mobileImageWidth) === 896 &&
+    (specImage?.height ?? d.specsArtwork.mobileImageHeight) === 141
+    ? mediaUrl(specImage, d.specsArtwork.mobileImageUrl) : undefined;
+  const heroProfile = uploadedProfile || specProfile;
 
   useEffect(() => {
     const desktop = window.matchMedia('(min-width: 992px)');
@@ -192,9 +198,20 @@ export default function Experience({ data: d }: { data: Homepage }) {
     <a className="skip-link" href="#main">Skip to content</a>
     <div className="page-progress" aria-hidden="true"><i /></div>
     <main id="main" tabIndex={-1}>
-      <div id="top">
+      <div id="top" className="hero-stage">
         <section className="hero" aria-labelledby="hero-heading">
-          <ImageView artwork={d.hero} className="hero-pen" fallback="/art/hero-pen.svg" eager />
+          <div className="hero-camera">
+            {heroProfile && <picture key={heroProfile} className={`hero-profile${uploadedProfile ? '' : ' hero-profile--spec'}`}>
+              <source media="(min-width: 992px) and (prefers-reduced-motion: no-preference)" srcSet={heroProfile} />
+              <img alt="" loading="lazy" decoding="async"
+                ref={image => {
+                  if (image?.complete && image.naturalWidth) image.parentElement?.setAttribute('data-ready', '');
+                }}
+                onLoad={event => event.currentTarget.parentElement?.setAttribute('data-ready', '')}
+                onError={event => event.currentTarget.parentElement?.removeAttribute('data-ready')} />
+            </picture>}
+            <ImageView artwork={d.hero} className="hero-pen" fallback="/art/hero-pen.svg" eager />
+          </div>
           <header className={`site-header ${menuOpen ? 'menu-open' : ''}`}
             onKeyDown={event => {
               if (event.key === 'Escape' && menuOpen && !inquiryOpen) {
@@ -209,7 +226,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
               aria-controls="homepage-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>
               {menuOpen ? <X size={30} aria-hidden="true" /> : <Grip size={28} aria-hidden="true" />}
             </button>
-            <div className="menu-panel" id="homepage-navigation">
+            <div className="menu-panel" id="homepage-navigation" data-lenis-prevent={menuOpen || undefined}>
               <nav aria-label="Main navigation">
                 {d.navigation.map((link, i) => <a href={safeHref(link.href)} key={link.id ?? i} onClick={() => setMenuOpen(false)}>{link.label}</a>)}
               </nav>
@@ -228,7 +245,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
             </button>
           </header>
           <h1 id="hero-heading" className="hero-title">{d.hero.title}</h1>
-          <Wipe />
+          <Wipe columns={6} />
         </section>
       </div>
 

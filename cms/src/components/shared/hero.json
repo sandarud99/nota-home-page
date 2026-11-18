@@ -45,6 +45,11 @@
       "allowedTypes": [
         "images"
       ]
+    },
+    "profileImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
     }
   },
   "config": {
@@ -79,6 +84,12 @@
         "edit": {
           "label": "Mobile image",
           "description": "Portrait and phone layouts use this asset below 992 pixels."
+        }
+      },
+      "profileImage": {
+        "edit": {
+          "label": "Desktop full pen profile",
+          "description": "Optional side-on pen image for the zoom-out. Choose a transparent image with proportions close to 896 × 141."
         }
       },
       "alt": {

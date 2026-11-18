@@ -9,7 +9,7 @@ module.exports = {
       populate: {
         brandMark: artwork,
         navigation: true,
-        hero: artwork,
+        hero: { populate: { ...artwork.populate, profileImage: image } },
         menuArtwork: artwork,
         specsHeading: true,
         specsArtwork: artwork,

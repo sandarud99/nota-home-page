@@ -19,7 +19,7 @@ type SeoDraft = Omit<HomepageSeo, 'ogImage' | 'twitterImage' | 'siteIcon'> & {
 type EditorLabels = { metadatas: Record<string, { edit: { label: string } }> };
 type HomepageDraft = {
   headerWordmark: string;
-  hero: { id: number; image: Asset };
+  hero: { id: number; image: Asset; profileImage?: Asset | null };
   seo: SeoDraft;
   audienceHeading: { id: number; description: string | null };
 };
@@ -100,7 +100,7 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
         ...auth,
         data: {
           headerWordmark: title,
-          hero: { id: original.hero.id, image: asset.id },
+          hero: { id: original.hero.id, image: asset.id, profileImage: asset.id },
           seo: { id: original.seo.id, ...seo },
           audienceHeading: { id: original.audienceHeading.id, description },
         },
@@ -110,6 +110,7 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
       const draftOnly = await apiHomepage();
       expect(draftOnly.headerWordmark).toBe(original.headerWordmark);
       expect(draftOnly.hero.image.url).toBe(original.hero.image.url);
+      expect(draftOnly.hero.profileImage?.url).toBe(original.hero.profileImage?.url);
       expect(draftOnly.seo).toMatchObject({
         metaTitle: original.seo.metaTitle,
         canonicalUrl: original.seo.canonicalUrl,
@@ -125,6 +126,7 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
       await expect(page.locator('.hero-pen img')).toHaveAttribute('src', publicImage);
       await expect(page.locator('.hero-pen img')).toHaveJSProperty('complete', true);
       expect(await page.locator('.hero-pen img').evaluate(img => (img as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+      await expect(page.locator('.hero-profile[data-ready] img')).toHaveJSProperty('currentSrc', publicImage);
       await expect(page.getByText(description)).toBeVisible();
       await expect(page.locator('link[rel="canonical"]')).toHaveJSProperty('href', seo.canonicalUrl);
       await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', publicImage);
@@ -167,7 +169,11 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
         ...auth,
         data: {
           headerWordmark: original.headerWordmark,
-          hero: { id: current.hero.id, image: original.hero.image.id },
+          hero: {
+            id: current.hero.id,
+            image: original.hero.image.id,
+            profileImage: original.hero.profileImage?.id ?? null,
+          },
           seo: {
             ...originalSeo,
             id: current.seo.id,

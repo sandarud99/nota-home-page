@@ -82,27 +82,65 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       };
 
       const hero = select('.hero');
-      const heroMotion = pin(hero, mobile ? .19 : 2.14)
-        .to(hero.querySelector('.hero-pen'), {
-          xPercent: mobile ? 0 : -11, yPercent: mobile ? -19 : 1,
-          scale: mobile ? 1.06 : 1.15, duration: mobile ? 1 : 1.47,
-        }, 0);
+      const header = select('.site-header');
       if (mobile) {
-        heroMotion.to(hero.querySelector('.hero-title'), { y: -14, duration: 1 }, 0);
+        gsap.set(header, { position: 'fixed' });
+        gsap.timeline({
+          scrollTrigger: { trigger: hero, start: 'bottom 18%', end: 'bottom top', scrub: true },
+        })
+          .to(header, { yPercent: -104, ease: 'power1.inOut' })
+          .set(header, { visibility: 'hidden' });
       } else {
+        const heroStage = select('.hero-stage');
+        const camera = select('.hero-camera');
+        const travel = 2.54;
+        // Bring the specifications in at pin release, where the white panels fill the view.
+        gsap.set(heroStage, { '--hero-overlap': 'calc(0px - var(--hero-height))' });
+        const heroMotion = pin(hero, travel)
+          .set(heroStage, { zIndex: 1 }, 0)
+          .set(heroStage, { zIndex: 0 }, travel);
+
+        if (camera.querySelector('.hero-profile')) {
+          // Frame the nib by viewport position and the complete pen by viewport width.
+          const pose = (nib: number, width: number, drop: number) => {
+            const scale = () => hero.clientWidth * width / (1.9055 * camera.offsetWidth);
+            return {
+              scale,
+              x: () => hero.clientWidth * nib - camera.offsetLeft - camera.offsetWidth * .047 * scale(),
+              y: () => hero.offsetHeight * drop,
+            };
+          };
+          heroMotion
+            .to(camera, { ...pose(.18, 1.54, .003), duration: .29, ease: 'power1.in' }, .18)
+            .to(camera, { ...pose(-.087, 1.56, .017), duration: .47 }, .47)
+            .to(camera, { ...pose(-.073, 1.20, .011), duration: .29, ease: 'power1.inOut' }, .94)
+            .to(camera, { ...pose(.034, .956, .002), duration: .51, ease: 'sine.inOut' }, 1.23)
+            .to(camera, { '--hero-profile-blend': 1, duration: .30, ease: 'power1.inOut' }, .34);
+        } else {
+          heroMotion
+            .to(camera, { xPercent: -13, scale: 1.16, duration: .76, ease: 'power1.in' }, .18)
+            .to(camera, { xPercent: -5, scale: 1.02, duration: .80, ease: 'power1.out' }, .94);
+        }
+
         heroMotion
-          .to(hero.querySelector('.hero-title'), { y: -25, autoAlpha: 0, duration: .4 }, .95)
-          .to(hero.querySelector('.site-header'), { autoAlpha: 0, duration: .27 }, 1.08)
-          .fromTo(hero.querySelectorAll('.scene-wipe i'), { scaleY: 0 }, { scaleY: 1, stagger: .06, duration: .24 }, 1.16);
+          .to(hero, { '--hero-shade': .46, duration: .49, ease: 'power1.inOut' }, .22)
+          .to(hero, { '--hero-shade': 0, duration: .86, ease: 'power1.out' }, .71)
+          .to(hero, { '--hero-shade': .40, duration: .54, ease: 'power1.inOut' }, 1.82)
+          .to(header, { yPercent: -104, duration: .17, ease: 'power1.inOut' }, 1.57)
+          .set(header, { visibility: 'hidden' }, 1.74)
+          .to(hero.querySelectorAll('.scene-wipe i'), {
+            scaleY: 1, stagger: .081, duration: .41, ease: 'power1.inOut',
+          }, 1.70);
       }
 
       const specs = select('.spec-scene');
       const groups = Array.from(specs.querySelectorAll<HTMLElement>('.spec-card'));
       const specMotion = pin(specs, (mobile ? .50 : .97) * Math.max(1, groups.length - 1));
-      specMotion.fromTo(specs.querySelector('.spec-pen'), { yPercent: mobile ? 16 : 44 }, { yPercent: 0, duration: .65 }, 0);
-      const firstSpec = mobile ? .16 : .53;
-      const lastSpec = Math.max(firstSpec, groups.length - 1) + .22;
+      const specPen = select('.spec-pen');
+      const firstSpec = mobile ? .16 : .98;
+      const lastSpec = (mobile ? Math.max(firstSpec, groups.length - 1) : firstSpec + (groups.length - 1) * .47) + .22;
       if (mobile) {
+        specMotion.fromTo(specPen, { yPercent: 16 }, { yPercent: 0, duration: .65 }, 0);
         groups.forEach((group, index) => {
           if (index === 0) return;
           specMotion
@@ -110,9 +148,18 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
             .fromTo(group, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: .27 }, index - .36);
         });
       } else {
+        const title = select('.spec-scene .section-title');
+        specMotion
+          .fromTo(title, { y: () => (specs.offsetHeight - title.offsetHeight) / 2, opacity: .68 }, {
+            opacity: 1, duration: .16, ease: 'power1.out',
+          }, 0)
+          .to(title, { y: 0, duration: .71, ease: 'power1.inOut' }, .27)
+          .fromTo(specPen, { yPercent: 84 }, { yPercent: 0, duration: .79, ease: 'power1.inOut' }, .32);
         groups.forEach((group, index) => {
-          specMotion.fromTo(group, { y: 35, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: .53 }, index * .52);
+          specMotion.fromTo(group, { y: 35, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: .45 }, .53 + index * .47);
         });
+        const controls = specs.querySelector('.scene-controls');
+        if (controls) specMotion.fromTo(controls, { autoAlpha: 0 }, { autoAlpha: 1, duration: .24 }, .73);
       }
       specMotion.to({}, { duration: .28 }, lastSpec);
       if (!mobile) specMotion.fromTo(specs.querySelectorAll('.scene-wipe i'), { scaleY: 0 }, { scaleY: 1, stagger: { each: .043, from: 'center' }, duration: .21 }, lastSpec + .05);

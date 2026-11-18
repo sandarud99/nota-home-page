@@ -77,7 +77,7 @@ export type Homepage = {
   headerWordmark: string;
   brandMark: Artwork;
   navigation: NavLink[];
-  hero: Artwork & { title: string; priceLabel: string; price: string; ctaLabel: string };
+  hero: Artwork & { title: string; priceLabel: string; price: string; ctaLabel: string; profileImage?: Media | null };
   menuArtwork: Artwork;
   specsHeading: Heading;
   specsArtwork: Artwork;

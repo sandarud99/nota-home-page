@@ -83,6 +83,8 @@ Content Manager exposes one **Homepage** single type with Draft & Publish and an
 
 Use **Content Manager → Homepage → Draft** to edit the labelled sections. Upload replacement artwork using the Media Library. Artwork has a main image, optional mobile image and editable alt text. Save the draft, then select **Publish** when it is ready to appear on the homepage. Next.js requests `GET /api/public-homepage` with its cache bypassed. Strapi explicitly populates the nested components and images and returns the published document.
 
+In **Hero**, the optional **Desktop full pen profile** image appears during the desktop pullback. Use a transparent side-on image with proportions close to 896 × 141. The seeded horizontal specification photograph supplies the full pen when the hero field is empty.
+
 Visitors send JSON to `POST /api/inquiry` on Next.js. Both loopback addresses, `localhost` and `127.0.0.1`, work on the configured local frontend port. Both servers validate the fields and honeypot. The proxy caps the request at 24 KiB, authenticates to Strapi with a dedicated shared secret, and returns success after the database write. Strapi allows five valid attempts per IP or email within a minute, with an additional application-wide cap. Open **Content Manager → Inquiry** to see submissions with the newest ones first.
 
 ## Verification

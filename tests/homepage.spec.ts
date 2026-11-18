@@ -32,7 +32,7 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
       const response = await page.goto('/');
       expect(response?.status()).toBe(200);
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Smart pen\s+for real thinking/);
-      await expect(page.locator('.pin-spacer')).toHaveCount(5);
+      await expect(page.locator('.pin-spacer')).toHaveCount(width < 992 ? 4 : 5);
       if (width < 992) await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible();
       else await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
       const images = await page.locator('.artwork img').evaluateAll(async images => {
@@ -47,11 +47,25 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
 
       const hero = page.locator('.hero');
-      await scrollInScene(hero, .24);
-      await expectPinned(hero);
-      const movedPen = await page.locator('.hero-pen').evaluate(node => (node as HTMLElement).style.transform);
-      await scrollInScene(hero, .02);
-      await expect.poll(() => page.locator('.hero-pen').evaluate(node => (node as HTMLElement).style.transform)).not.toBe(movedPen);
+      const camera = hero.locator('.hero-camera');
+      if (width < 992) {
+        const start = (await camera.boundingBox())!.y;
+        const header = hero.locator('.site-header');
+        await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), Math.round(height * .12));
+        await expect.poll(async () => (await camera.boundingBox())!.y).toBeLessThan(start - 50);
+        await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
+        await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), Math.round(height * .91));
+        await expect.poll(async () => (await header.boundingBox())!.y).toBeLessThan(-3);
+        await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+        await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
+      } else {
+        const start = (await camera.boundingBox())!.x;
+        await scrollInScene(hero, .3);
+        await expectPinned(hero);
+        await expect.poll(async () => (await camera.boundingBox())!.x).toBeLessThan(start - 80);
+        await scrollInScene(hero, .02);
+        await expect.poll(async () => (await camera.boundingBox())!.x).toBeCloseTo(start, 0);
+      }
 
       const specs = page.locator('.spec-scene');
       await scrollInScene(specs, .2);
@@ -91,6 +105,70 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
   });
 }
 
+test('desktop hero, sliding menu and panel wipe follow the scroll in both directions', async ({ page }) => {
+  await page.setViewportSize({ width: 1470, height: 762 });
+  await page.goto('/');
+  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+  const hero = page.locator('.hero');
+  const camera = hero.locator('.hero-camera');
+  const profile = hero.locator('.hero-profile');
+  const header = hero.locator('.site-header');
+  const panels = hero.locator('.scene-wipe i');
+  await expect(profile).toHaveAttribute('data-ready', '');
+  await expect(panels).toHaveCount(6);
+
+  const start = (await camera.boundingBox())!;
+  await scrollInScene(hero, .36);
+  await expectPinned(hero);
+  await expect.poll(async () => (await camera.boundingBox())!.x).toBeLessThan(-60);
+  const wide = (await profile.boundingBox())!.width;
+  await scrollInScene(hero, .60);
+  await expect.poll(async () => (await profile.boundingBox())!.width).toBeLessThan(wide * .72);
+  await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
+
+  await scrollInScene(hero, .65);
+  await expect.poll(async () => (await header.boundingBox())!.y).toBeLessThan(-20);
+  await expect(header).toHaveCSS('opacity', '1');
+  const { end } = await scrollInScene(hero, .84);
+  await expect(header).toBeHidden();
+  await expectPinned(hero);
+  const heights = () => panels.evaluateAll(columns => columns.map(column => column.getBoundingClientRect().height));
+  await expect.poll(async () => (await heights())[0]).toBeGreaterThan(750);
+  const rise = await heights();
+  expect(rise[1]).toBeGreaterThan(rise[2]);
+  expect(rise[2]).toBeGreaterThan(rise[3]);
+  expect(rise[3]).toBeGreaterThan(rise[4]);
+  await expect(panels.first()).toHaveCSS('box-shadow', /inset/);
+  expect(await hero.evaluate(stage => stage.contains(document.elementFromPoint(innerWidth - 10, innerHeight - 10)))).toBe(true);
+
+  await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), end + 112);
+  await expectPinned(page.locator('.spec-scene'));
+  const specHeading = page.getByRole('heading', { name: /Nota pen.*Specifications/i });
+  await expect(specHeading).toBeInViewport();
+  const center = (await specHeading.boundingBox())!;
+  expect(center.y + center.height / 2).toBeGreaterThan(762 * .39);
+  expect(center.y + center.height / 2).toBeLessThan(762 * .63);
+
+  await scrollInScene(hero, .60);
+  await expect(header).toBeVisible();
+  await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
+  await expect.poll(heights).toEqual([0, 0, 0, 0, 0, 0]);
+  await scrollInScene(hero, .02);
+  await expect.poll(async () => (await camera.boundingBox())!.x).toBeCloseTo(start.x, 0);
+
+  await header.locator('a[href="#specifications"]').click();
+  await expect(page).toHaveURL(/#specifications$/);
+  await expect(specHeading).toBeInViewport();
+  await expect.poll(() => specHeading.evaluate(heading => {
+    const bounds = heading.getBoundingClientRect();
+    return heading.contains(document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2));
+  })).toBe(true);
+
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await expect(page.locator('.pin-spacer')).toHaveCount(4);
+  await expect(page.locator('.hero-stage')).toHaveCSS('margin-bottom', '0px');
+});
+
 test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
@@ -115,7 +193,7 @@ test('touch moves the document through a pinned finish and back', async ({ brows
   try {
     const page = await context.newPage();
     await page.goto('/');
-    await expect(page.locator('.pin-spacer')).toHaveCount(5);
+    await expect(page.locator('.pin-spacer')).toHaveCount(4);
     const finishes = page.locator('.finish-frame');
     await scrollInScene(finishes, .03);
     const controls = page.getByRole('group', { name: 'pen finish' });
@@ -133,7 +211,7 @@ test('touch moves the document through a pinned finish and back', async ({ brows
 test('every pinned chapter selector brings its content into view', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+  await expect(page.locator('.pin-spacer')).toHaveCount(4);
 
   const chapters = [
     { stage: '.spec-scene', label: 'specification', count: 3 },
