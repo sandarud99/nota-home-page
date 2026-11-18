@@ -95,8 +95,8 @@ export const homepageData = {
   boxSet: { title: 'A complete, ready-to-use set', description: 'Smart pen, Smartpaper notepad, charging cable, and instructions — carefully packaged for a hassle-free start.', ...artwork('box-set', 'Smartpaper notebook and pen in the presentation box', 'box-set-mobile') },
   boxProductOverview: 'A precision smart pen with a solid aluminum body, designed for natural handwriting and accurate digital capture. Seamlessly connects to smart paper, translating every stroke into structured digital data — no screens, no distractions, just writing.',
   boxItems: [
-    { title: 'The NŌTA Smart Pen', description: 'Aluminum body, USB-C charging, physical control button, and Bluetooth connectivity. Up to 8 hours of active use with a lightweight, balanced design for everyday writing.', ...artwork('box-pen', 'Silver smart pen nib and body', 'box-pen-mobile') },
-    { title: 'Charging Adapter', description: 'Compact USB-C power adapter with stable output for everyday charging. Designed for safe, efficient power delivery with minimal heat.', ...artwork('box-adapter', 'USB-C cable attached to the charging adapter', 'box-adapter-mobile') },
+    { title: 'The NŌTA Smart Pen', description: 'Aluminum body, USB-C charging, physical control button, and Bluetooth connectivity.\nUp to 8 hours of active use with a lightweight, balanced design for everyday writing.', ...artwork('box-pen', 'Silver smart pen nib and body', 'box-pen-mobile') },
+    { title: 'Charging Adapter', description: 'Compact USB-C power adapter with stable output for everyday charging. Designed for safe, efficient power delivery with minimal heat.', ...artwork('box-adapter', 'USB-C cable attached to the charging adapter', 'box-adapter-mobile'), hoverImageUrl: '/images/box-adapter-alternate.webp' },
   ],
   boxCallouts: [
     { title: 'Flush-fit precision cap', ...artwork('detail-cap', 'Detail of the clipped pen cap') },

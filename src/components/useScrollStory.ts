@@ -227,7 +227,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       track('specifications', specMotion, groups.length, firstSpec / specMotion.duration(), lastSpec / specMotion.duration());
 
       const manifesto = select('.manifesto');
-      const letters = manifesto.querySelectorAll('.manifesto-letter');
+      const letters = manifesto.querySelectorAll('.highlight-letter');
       const brighten = { opacity: 1, stagger: { amount: .52 }, duration: .027, ease: 'power1.inOut' };
       if (mobile) {
         pin(manifesto, .19).fromTo(letters, { opacity: .28 }, brighten);
@@ -336,7 +336,6 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       function revealBox() {
         const stage = select('.box-intro');
         const title = select('.box-intro .section-title');
-        const panel = select('.box-set');
         const titleStart = .43;
         const titleEnd = 1.11;
         const travel = 1.25;
@@ -351,13 +350,15 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
             opacity: 1, duration: titleEnd - titleStart, ease: 'sine.inOut',
           }, titleStart);
 
-        gsap.timeline({
-          scrollTrigger: { trigger: panel, start: 'top bottom', end: 'top 12%', scrub: true },
-        })
-          .fromTo(panel, { '--box-shutter': 1 }, { '--box-shutter': 0, duration: .81, ease: 'sine.inOut' })
-          .fromTo(panel.querySelector('.box-item-copy'), { opacity: 0 }, {
-            opacity: 1, duration: .19, ease: 'power1.out',
-          });
+        for (const panel of boxSection.querySelectorAll('.box-item')) {
+          gsap.timeline({
+            scrollTrigger: { trigger: panel, start: 'top bottom', end: 'top 12%', scrub: true },
+          })
+            .fromTo(panel, { '--box-shutter': 1 }, { '--box-shutter': 0, duration: .81, ease: 'sine.inOut' })
+            .fromTo(panel.querySelector('.box-item-copy'), { opacity: 0 }, {
+              opacity: 1, duration: .19, ease: 'power1.out',
+            });
+        }
       }
 
       function pinFinishes() {
@@ -380,6 +381,11 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
 
       pinPaper();
       if (!mobile) revealBox();
+      const overview = select('.box-overview');
+      gsap.fromTo(overview.querySelectorAll('.highlight-letter'), { opacity: .15 }, {
+        opacity: 1, duration: .04, stagger: { amount: .96 }, ease: 'none',
+        scrollTrigger: { trigger: overview, start: 'top 85%', end: 'top 23%', scrub: true },
+      });
       pinFinishes();
       updateProgress();
 

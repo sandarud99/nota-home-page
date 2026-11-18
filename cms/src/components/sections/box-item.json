@@ -35,6 +35,13 @@
       "allowedTypes": [
         "images"
       ]
+    },
+    "hoverImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
     }
   },
   "config": {
@@ -48,6 +55,12 @@
         "edit": {
           "label": "Mobile image",
           "description": "Portrait and phone layouts use this asset below 992 pixels."
+        }
+      },
+      "hoverImage": {
+        "edit": {
+          "label": "Hover image",
+          "description": "Optional alternate photo shown on hover or keyboard focus. Use the same proportions as the desktop image."
         }
       },
       "alt": {

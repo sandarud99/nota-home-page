@@ -1,7 +1,7 @@
 import 'server-only';
 import { cache } from 'react';
 import { homepageData } from '@/content/homepage';
-import type { Artwork, Homepage, Media } from './strapi';
+import type { Artwork, BoxItemContent, Homepage, Media } from './strapi';
 
 const localMediaOrigin = 'http://127.0.0.1:1337';
 
@@ -41,6 +41,10 @@ export const getHomepage = cache(async (): Promise<Homepage> => {
     image: resolveMedia(item.image, origin),
     mobileImage: item.mobileImage ? resolveMedia(item.mobileImage, origin) : null,
   });
+  const withBoxArt = (item: BoxItemContent): BoxItemContent => ({
+    ...withArt(item),
+    hoverImage: item.hoverImage ? resolveMedia(item.hoverImage, origin) : null,
+  });
 
   return {
     ...data,
@@ -53,8 +57,8 @@ export const getHomepage = cache(async (): Promise<Homepage> => {
     specsArtwork: withArt(data.specsArtwork),
     aboutArtwork: withArt(data.aboutArtwork),
     paperDetails: data.paperDetails.map(withArt),
-    boxSet: withArt(data.boxSet),
-    boxItems: data.boxItems.map(withArt),
+    boxSet: withBoxArt(data.boxSet),
+    boxItems: data.boxItems.map(withBoxArt),
     boxCallouts: data.boxCallouts.map(withArt),
     colors: data.colors.map(withArt),
     seo: {

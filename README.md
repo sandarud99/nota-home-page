@@ -21,7 +21,7 @@ In a second terminal, run `npm run dev`. Open [the homepage](http://127.0.0.1:30
 
 If port 5432 is already in use, publish the Docker database on 5433 by using `-p 127.0.0.1:5433:5432`, then run `DATABASE_URL=postgresql://nota@127.0.0.1:5433/nota npm run env:local`. To resume a stopped project database, run `docker start nota-postgres`.
 
-Strapi seeds an empty database with one published Homepage and 32 real Media Library uploads on the first start. The seed reuses named uploads on retry and preserves any existing homepage draft or publication. Set `SEED_HOMEPAGE=false` after the initial publish if you want an empty database to require manual initialization. The shared seed inputs live in `src/content/homepage.ts` and `public/images`.
+Strapi seeds an empty database with one published Homepage and 33 Media Library uploads on the first start. The seed reuses named uploads on retry and preserves any existing homepage draft or publication. Set `SEED_HOMEPAGE=false` after the initial publish if you want an empty database to require manual initialization. The shared seed inputs live in `src/content/homepage.ts` and `public/images`.
 
 For independent frontend development, run `CONTENT_SOURCE=local npm run dev`. CMS mode reads only published Strapi content. If the CMS is unavailable, the page shows a service error and the readiness endpoint returns 503.
 
@@ -84,6 +84,8 @@ Content Manager exposes one **Homepage** single type with Draft & Publish and an
 Use **Content Manager → Homepage → Draft** to edit the labelled sections. Upload replacement artwork using the Media Library. Artwork has a main image, optional mobile image and editable alt text. Save the draft, then select **Publish** when it is ready to appear on the homepage. Next.js requests `GET /api/public-homepage` with its cache bypassed. Strapi explicitly populates the nested components and images and returns the published document.
 
 In **Hero**, the optional **Desktop full pen profile** image appears during the desktop pullback. Use a transparent side-on image with proportions close to 896 × 141. The seeded horizontal specification photograph supplies the full pen when the hero field is empty.
+
+In **Box contents**, the optional **Hover image** supplies the alternate photo on pointer hover and keyboard focus. The seeded Charging Adapter uses a full view of the adapter. Keep the alternate photo in the same proportions as the primary photo.
 
 Visitors send JSON to `POST /api/inquiry` on Next.js. Both loopback addresses, `localhost` and `127.0.0.1`, work on the configured local frontend port. Both servers validate the fields and honeypot. The proxy caps the request at 24 KiB, authenticates to Strapi with a dedicated shared secret, and returns success after the database write. Strapi allows five valid attempts per IP or email within a minute, with an additional application-wide cap. Open **Content Manager → Inquiry** to see submissions with the newest ones first.
 

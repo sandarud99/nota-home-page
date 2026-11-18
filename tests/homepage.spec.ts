@@ -271,7 +271,7 @@ test('the center-out split hands off to the pinned manifesto and audience fades'
   const thought = page.locator('.thought-intro');
   const manifesto = thought.locator('.manifesto');
   const audience = thought.locator('.audience-intro');
-  const letters = manifesto.locator('.manifesto-letter');
+  const letters = manifesto.locator('.highlight-letter');
   const widths = () => bands.evaluateAll(rows => rows.map(row => Math.round(row.getBoundingClientRect().width)));
   const letterOpacity = (index: number) => letters.nth(index).evaluate(letter => Number(getComputedStyle(letter).opacity));
   const leadOpacity = () => audience.evaluate(section => Number(getComputedStyle(section).opacity));
@@ -630,6 +630,64 @@ test('Inside the box fades in within the circle and reveals the kit before its c
   await expect(title).toHaveCSS('opacity', '1');
 });
 
+test('the box overview fills in order and the adapter fades between its two photos', async ({ page }) => {
+  const height = 805;
+  await page.setViewportSize({ width: 1470, height });
+  await page.goto('/');
+  await expect(page.locator('.pin-spacer')).toHaveCount(6);
+  await page.evaluate(() => document.fonts.ready);
+
+  const overview = page.locator('.box-overview');
+  const letters = overview.locator('.highlight-letter');
+  const cards = page.locator('.box-items .box-item');
+  const adapter = cards.nth(1);
+  const captions = page.locator('.box-items .box-item-copy');
+  const alternate = adapter.locator('.box-item-alternate');
+  const topOf = (target: Locator) => target.evaluate(node => node.getBoundingClientRect().top + scrollY);
+  const scrollToInset = (top: number, inset: number) => page.evaluate(top => scrollTo({ top, behavior: 'instant' }), top - inset * height);
+  const shutters = () => cards.evaluateAll(items => items.map(item => Number(getComputedStyle(item).getPropertyValue('--box-shutter'))));
+  const overviewTop = await topOf(overview);
+  const cardsTop = await topOf(cards.first());
+
+  await scrollToInset(overviewTop, .91);
+  await expect(letters.first()).toHaveCSS('opacity', '0.15');
+  await expect(letters.last()).toHaveCSS('opacity', '0.15');
+  await scrollToInset(overviewTop, .52);
+  await expect(letters.first()).toHaveCSS('opacity', '1');
+  await expect(letters.last()).toHaveCSS('opacity', '0.15');
+  expect(await letters.evaluateAll(nodes => nodes.filter(node => getComputedStyle(node).opacity === '1').length / nodes.length)).toBeGreaterThan(.4);
+  await scrollToInset(overviewTop, .22);
+  await expect(letters.last()).toHaveCSS('opacity', '1');
+
+  await scrollToInset(cardsTop, .61);
+  await expect.poll(async () => (await shutters()).every(value => value > .15 && value < .62)).toBe(true);
+  const reveal = await shutters();
+  expect(reveal[0]).toBeCloseTo(reveal[1], 3);
+  for (const caption of await captions.all()) await expect(caption).toHaveCSS('opacity', '0');
+
+  await scrollToInset(cardsTop, .115);
+  await expect.poll(shutters).toEqual([0, 0]);
+  for (const caption of await captions.all()) await expect(caption).toHaveCSS('opacity', '1');
+  await expect(alternate).toHaveCSS('opacity', '0');
+  await expect(alternate).toHaveCSS('transition-property', 'opacity');
+  await expect.poll(() => alternate.locator('img').evaluate(img => (img as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+
+  await adapter.hover({ position: { x: 140, y: 320 } });
+  await expect(alternate).toHaveCSS('opacity', '1');
+  await expect(captions.last()).toHaveCSS('opacity', '1');
+  await page.mouse.move(5, 5);
+  await expect(alternate).toHaveCSS('opacity', '0');
+  await page.keyboard.press('Tab');
+  await adapter.focus();
+  await expect(alternate).toHaveCSS('opacity', '1');
+
+  await scrollToInset(cardsTop, .61);
+  await expect.poll(shutters).toEqual(reveal);
+  for (const caption of await captions.all()) await expect(caption).toHaveCSS('opacity', '0');
+  await scrollToInset(overviewTop, .91);
+  await expect(letters.first()).toHaveCSS('opacity', '0.15');
+});
+
 test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
@@ -741,4 +799,5 @@ test('reduced motion exposes every chapter without pinning', async ({ page }) =>
     await expect(page.getByRole('heading', { name: label })).toBeVisible();
   }
   await expect(page.getByRole('group', { name: 'pen finish' })).toBeHidden();
+  await expect(page.locator('.box-overview .highlight-letter').first()).toHaveCSS('opacity', '1');
 });

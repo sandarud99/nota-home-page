@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
 import { ArrowLeft, ArrowRight, Grip, X } from 'lucide-react';
 import { mediaUrl, safeHref } from '@/lib/strapi';
-import type { Artwork, FormCopy, Heading, Homepage, SectionItem } from '@/lib/strapi';
+import type { Artwork, BoxItemContent, FormCopy, Heading, Homepage } from '@/lib/strapi';
 import { useScrollStory } from './useScrollStory';
 
 function ImageView({ artwork, className = '', eager = false, fallback }: {
@@ -55,19 +55,23 @@ function Wipe({ panels, className = 'scene-wipe' }: { panels: number; className?
 
 const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 
+function HighlightText({ text }: { text: string }) {
+  return <>
+    <span className="sr-only">{text}</span>
+    <span aria-hidden="true">
+      {text.trim().split(/\s+/).map((word, index) => <Fragment key={index}>
+        {index > 0 && ' '}
+        <span className="highlight-word">
+          {Array.from(graphemes.segment(word), ({ segment }, i) => <span className="highlight-letter" key={i}>{segment}</span>)}
+        </span>
+      </Fragment>)}
+    </span>
+  </>;
+}
+
 function Manifesto({ text }: { text: string }) {
   return <section className="manifesto" aria-label="Our philosophy">
-    <p className="manifesto-words">
-      <span className="sr-only">{text}</span>
-      <span aria-hidden="true">
-        {text.trim().split(/\s+/).map((word, index) => <Fragment key={index}>
-          {index > 0 && ' '}
-          <span className="manifesto-word">
-            {Array.from(graphemes.segment(word), ({ segment }, i) => <span className="manifesto-letter" key={i}>{segment}</span>)}
-          </span>
-        </Fragment>)}
-      </span>
-    </p>
+    <p className="manifesto-words"><HighlightText text={text} /></p>
   </section>;
 }
 
@@ -175,9 +179,14 @@ function InquiryModal({ copy, close }: { copy: FormCopy; close: () => void }) {
   </dialog>;
 }
 
-function BoxItem({ item, className = '' }: { item: SectionItem; className?: string }) {
-  return <article className={`box-item ${className}`}>
-    <ImageView artwork={item} fallback="/art/notebook.svg" />
+function BoxItem({ item, className = '' }: { item: BoxItemContent; className?: string }) {
+  const alternate = item.hoverImage || item.hoverImageUrl;
+  return <article className={`box-item ${className}`} tabIndex={alternate ? 0 : undefined}>
+    <div className="box-item-artwork">
+      <ImageView artwork={item} fallback="/art/notebook.svg" />
+      {alternate && <ImageView artwork={{ image: item.hoverImage, imageUrl: item.hoverImageUrl, alt: '' }}
+        className="box-item-alternate" />}
+    </div>
     <div className="box-item-copy"><h3>{item.title}</h3>{item.description && <p>{item.description}</p>}</div>
   </article>;
 }
@@ -336,7 +345,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
         </div>
         <div className="box-contents">
           <BoxItem item={d.boxSet} className="box-set" />
-          <p className="box-overview">{d.boxProductOverview}</p>
+          <p className="box-overview"><HighlightText text={d.boxProductOverview} /></p>
           <div className="box-items">{d.boxItems.map((item, i) => <BoxItem key={item.id ?? i} item={item} />)}</div>
         </div>
         <div className="box-callouts">

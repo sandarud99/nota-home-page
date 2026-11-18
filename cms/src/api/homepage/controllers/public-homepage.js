@@ -1,6 +1,7 @@
 const homepageType = 'api::homepage.homepage';
 const image = { fields: ['url', 'alternativeText', 'width', 'height'] };
 const artwork = { populate: { image, mobileImage: image } };
+const boxArtwork = { populate: { ...artwork.populate, hoverImage: image } };
 
 module.exports = {
   async read(ctx) {
@@ -20,8 +21,8 @@ module.exports = {
         paperHeading: true,
         paperDetails: artwork,
         boxHeading: true,
-        boxSet: artwork,
-        boxItems: artwork,
+        boxSet: boxArtwork,
+        boxItems: boxArtwork,
         boxCallouts: artwork,
         colorsHeading: true,
         colors: artwork,

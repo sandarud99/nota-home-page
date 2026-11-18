@@ -26,6 +26,8 @@ export type SectionItem = Artwork & {
   bullets?: { id?: number; text: string }[];
 };
 
+export type BoxItemContent = SectionItem & { hoverImage?: Media | null; hoverImageUrl?: string };
+
 export type Feature = Artwork & {
   id?: number;
   title: string;
@@ -90,9 +92,9 @@ export type Homepage = {
   paperHeading: Heading;
   paperDetails: Feature[];
   boxHeading: Heading;
-  boxSet: SectionItem;
+  boxSet: BoxItemContent;
   boxProductOverview: string;
-  boxItems: SectionItem[];
+  boxItems: BoxItemContent[];
   boxCallouts: SectionItem[];
   colorsHeading: Heading;
   colors: Finish[];

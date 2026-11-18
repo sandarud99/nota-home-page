@@ -42,10 +42,10 @@ module.exports = async function seedHomepage(strapi) {
     }
     if (!value || typeof value !== 'object') return value;
     const fields = {};
-    const mediaFields = { imageUrl: 'image', mobileImageUrl: 'mobileImage', ogImageUrl: 'ogImage' };
+    const mediaFields = { imageUrl: 'image', mobileImageUrl: 'mobileImage', hoverImageUrl: 'hoverImage', ogImageUrl: 'ogImage' };
     for (const [key, field] of Object.entries(value)) {
       if (key.endsWith('Width') || key.endsWith('Height')) continue;
-      if (mediaFields[key]) fields[mediaFields[key]] = await storeImage(field, value.alt);
+      if (mediaFields[key]) fields[mediaFields[key]] = await storeImage(field, key === 'hoverImageUrl' ? undefined : value.alt);
       else fields[key] = await withUploads(field);
     }
     return fields;
