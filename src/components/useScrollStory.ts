@@ -20,6 +20,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
 
     const select = (selector: string) => page.querySelector<HTMLElement>(selector)!;
     const progress = select('.page-progress');
+    const specSection = select('#specifications');
     const updateProgress = () => {
       const scroller = document.scrollingElement!;
       const distance = scroller.scrollHeight - scroller.clientHeight;
@@ -32,10 +33,18 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
     const media = gsap.matchMedia(page);
     let refreshFrame = 0;
     let disposed = false;
+    let pendingSpecLink = location.hash === '#specifications';
     const refresh = () => {
       cancelAnimationFrame(refreshFrame);
       refreshFrame = requestAnimationFrame(() => {
         ScrollTrigger.refresh();
+        if (pendingSpecLink) {
+          pendingSpecLink = false;
+          const margin = parseFloat(getComputedStyle(specSection).scrollMarginTop);
+          if (specSection.getBoundingClientRect().top > margin) {
+            specSection.scrollIntoView({ behavior: 'instant' });
+          }
+        }
         updateProgress();
       });
     };
@@ -56,7 +65,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       const tick = (time: number) => smooth.raf(time * 1000);
       gsap.ticker.add(tick);
 
-      const pin = (stage: HTMLElement, travel: number) => gsap.timeline({
+      const pin = (stage: HTMLElement, travel: number, onRefresh?: (trigger: ScrollTrigger) => void) => gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: {
           trigger: stage,
@@ -65,6 +74,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
           pin: true,
           scrub: true,
           invalidateOnRefresh: true,
+          onRefresh,
         },
       });
 
@@ -135,7 +145,16 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
 
       const specs = select('.spec-scene');
       const groups = Array.from(specs.querySelectorAll<HTMLElement>('.spec-card'));
-      const specMotion = pin(specs, (mobile ? .50 : .97) * Math.max(1, groups.length - 1));
+      const revealEnd = .18;
+      const specTravel = (mobile ? .50 : .97) * Math.max(1, groups.length - 1);
+      const specMotion = pin(specs, specTravel, mobile ? undefined : trigger => {
+        const duration = trigger.animation?.duration();
+        if (duration) {
+          // Land past the fade when navigating directly to Specifications.
+          const offset = Math.ceil((trigger.end - trigger.start) * revealEnd / duration);
+          specSection.style.scrollMarginTop = `-${offset}px`;
+        }
+      });
       const specPen = select('.spec-pen');
       const firstSpec = mobile ? .16 : .98;
       const lastSpec = (mobile ? Math.max(firstSpec, groups.length - 1) : firstSpec + (groups.length - 1) * .47) + .22;
@@ -149,10 +168,14 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
         });
       } else {
         const title = select('.spec-scene .section-title');
+        const titleDelay = .025;
         specMotion
-          .fromTo(title, { y: () => (specs.offsetHeight - title.offsetHeight) / 2, opacity: .68 }, {
-            opacity: 1, duration: .16, ease: 'power1.out',
+          .fromTo(select('.spec-intro-lines'), { opacity: 1 }, {
+            opacity: 0, duration: .115, ease: 'power2.out',
           }, 0)
+          .fromTo(title, { y: () => (specs.offsetHeight - title.offsetHeight) / 2, opacity: 0 }, {
+            opacity: 1, duration: revealEnd - titleDelay, ease: 'sine.inOut',
+          }, titleDelay)
           .to(title, { y: 0, duration: .71, ease: 'power1.inOut' }, .27)
           .fromTo(specPen, { yPercent: 84 }, { yPercent: 0, duration: .79, ease: 'power1.inOut' }, .32);
         groups.forEach((group, index) => {
@@ -213,6 +236,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       updateProgress();
 
       return () => {
+        specSection.style.removeProperty('scroll-margin-top');
         chapters.current = {};
         lenis.current = null;
         gsap.ticker.remove(tick);

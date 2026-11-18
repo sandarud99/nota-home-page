@@ -45,8 +45,10 @@ function SectionTitle({ id, heading }: { id: string; heading: Heading }) {
   </div>;
 }
 
-function Wipe({ columns = 7 }: { columns?: number }) {
-  return <div className="scene-wipe" aria-hidden="true">
+const heroWipeColumns = 6;
+
+function Wipe({ columns = 7, className = 'scene-wipe' }: { columns?: number; className?: string }) {
+  return <div className={className} aria-hidden="true">
     {Array.from({ length: columns }, (_, i) => <i key={i} />)}
   </div>;
 }
@@ -245,12 +247,13 @@ export default function Experience({ data: d }: { data: Homepage }) {
             </button>
           </header>
           <h1 id="hero-heading" className="hero-title">{d.hero.title}</h1>
-          <Wipe columns={6} />
+          <Wipe columns={heroWipeColumns} />
         </section>
       </div>
 
       <section id="specifications" aria-labelledby="specs-heading">
         <div className="spec-scene">
+          <Wipe columns={heroWipeColumns} className="spec-intro-lines" />
           <SectionTitle id="specs-heading" heading={d.specsHeading} />
           <ImageView artwork={d.specsArtwork} className="spec-pen" fallback="/art/pen-transparent.svg" />
           <div className="spec-cards">

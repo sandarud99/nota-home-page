@@ -121,9 +121,12 @@ img { display: block; }
 .order-button:hover, .inquiry-submit:hover { background: #29292d; }
 .mobile-toggle, .mobile-order, .menu-product, .menu-credits { display: none; }
 
-.scene-wipe { position: absolute; z-index: 12; inset: 0; display: flex; pointer-events: none; }
-.scene-wipe i { flex: 1; background: white; transform: scaleY(0); transform-origin: bottom; }
-.hero .scene-wipe i:not(:last-child) { box-shadow: inset -1px 0 #c7c7c7; }
+.scene-wipe, .spec-intro-lines { position: absolute; inset: 0; display: flex; pointer-events: none; }
+.scene-wipe i, .spec-intro-lines i { flex: 1; }
+.scene-wipe { z-index: 12; }
+.scene-wipe i { background: white; transform: scaleY(0); transform-origin: bottom; }
+.hero .scene-wipe i:not(:last-child), .spec-intro-lines i:not(:last-child) { box-shadow: inset -1px 0 #c7c7c7; }
+.spec-intro-lines { z-index: 3; opacity: 0; }
 .spec-scene { position: relative; isolation: isolate; height: var(--scene-height); min-height: 560px; overflow: hidden; background: #fff; }
 .spec-scene .scene-wipe i { background: #070707; }
 .section-title { display: grid; place-content: center; text-align: center; padding: 24px var(--gutter); height: min(98svh, 1080px); }

@@ -141,13 +141,35 @@ test('desktop hero, sliding menu and panel wipe follow the scroll in both direct
   await expect(panels.first()).toHaveCSS('box-shadow', /inset/);
   expect(await hero.evaluate(stage => stage.contains(document.elementFromPoint(innerWidth - 10, innerHeight - 10)))).toBe(true);
 
+  const specs = page.locator('.spec-scene');
+  const fade = () => specs.evaluate(stage => {
+    const opacity = (selector: string) => Number(getComputedStyle(stage.querySelector(selector)!).opacity);
+    return { title: opacity('.section-title'), dividers: opacity('.spec-intro-lines') };
+  });
+
+  await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), end + 1);
+  await expectPinned(specs);
+  await expect.poll(async () => (await fade()).dividers).toBeGreaterThan(.9);
+  expect((await fade()).title).toBe(0);
+
+  await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), end + 25);
+  await expect.poll(async () => (await fade()).title).toBeGreaterThan(.01);
+  const faint = await fade();
+  expect(faint.title).toBeLessThan(.15);
+  expect(faint.dividers).toBeGreaterThan(.12);
+  expect(faint.dividers).toBeLessThan(.6);
+
   await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), end + 112);
-  await expectPinned(page.locator('.spec-scene'));
+  await expectPinned(specs);
+  await expect.poll(fade).toEqual({ title: 1, dividers: 0 });
   const specHeading = page.getByRole('heading', { name: /Nota pen.*Specifications/i });
   await expect(specHeading).toBeInViewport();
   const center = (await specHeading.boundingBox())!;
   expect(center.y + center.height / 2).toBeGreaterThan(762 * .39);
   expect(center.y + center.height / 2).toBeLessThan(762 * .63);
+
+  await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), end + 25);
+  await expect.poll(fade).toEqual(faint);
 
   await scrollInScene(hero, .60);
   await expect(header).toBeVisible();
@@ -159,6 +181,7 @@ test('desktop hero, sliding menu and panel wipe follow the scroll in both direct
   await header.locator('a[href="#specifications"]').click();
   await expect(page).toHaveURL(/#specifications$/);
   await expect(specHeading).toBeInViewport();
+  await expect.poll(fade).toEqual({ title: 1, dividers: 0 });
   await expect.poll(() => specHeading.evaluate(heading => {
     const bounds = heading.getBoundingClientRect();
     return heading.contains(document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2));
@@ -167,6 +190,13 @@ test('desktop hero, sliding menu and panel wipe follow the scroll in both direct
   await page.setViewportSize({ width: 768, height: 1024 });
   await expect(page.locator('.pin-spacer')).toHaveCount(4);
   await expect(page.locator('.hero-stage')).toHaveCSS('margin-bottom', '0px');
+  await expect.poll(fade).toEqual({ title: 1, dividers: 0 });
+
+  await page.goto('about:blank');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/#specifications');
+  await expect(specHeading).toBeInViewport();
+  await expect.poll(fade).toEqual({ title: 1, dividers: 0 });
 });
 
 test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page }) => {
