@@ -1,0 +1,45 @@
+{
+  "collectionName": "components_sections_paper_chapter",
+  "info": {
+    "displayName": "Smartpaper chapter",
+    "description": "The full-screen artwork, large heading, and supporting card for one scroll chapter."
+  },
+  "attributes": {
+    "title": {
+      "type": "text",
+      "required": true,
+      "maxLength": 160
+    },
+    "caption": {
+      "type": "string",
+      "required": true,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "text",
+      "required": true,
+      "maxLength": 750
+    },
+    "alt": {
+      "type": "string",
+      "required": false,
+      "maxLength": 250
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "mobileImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    }
+  }
+}

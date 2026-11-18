@@ -1,0 +1,50 @@
+{
+  "collectionName": "components_shared_hero",
+  "info": {
+    "displayName": "Hero",
+    "description": "Opening title, order price, and responsive pen imagery."
+  },
+  "attributes": {
+    "title": {
+      "type": "text",
+      "required": true,
+      "maxLength": 130
+    },
+    "priceLabel": {
+      "type": "string",
+      "required": true,
+      "maxLength": 60
+    },
+    "price": {
+      "type": "string",
+      "required": true,
+      "maxLength": 32
+    },
+    "ctaLabel": {
+      "type": "string",
+      "required": true,
+      "maxLength": 40
+    },
+    "alt": {
+      "type": "string",
+      "required": false,
+      "maxLength": 250
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "mobileImage": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    }
+  }
+}

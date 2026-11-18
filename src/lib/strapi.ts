@@ -99,25 +99,9 @@ export function safeHref(href: string) {
 export function mediaUrl(media?: Media | null, localUrl?: string) {
   const url = media?.url || localUrl;
   if (!url) return undefined;
-  if (url.startsWith('/') && !url.startsWith('//')) {
-    if (!media?.url) return url;
-    return new URL(url, process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337').href;
-  }
+  if (!media?.url && url.startsWith('/') && !url.startsWith('//')) return url;
   try {
     const resolved = new URL(url);
     if (['https:', 'http:'].includes(resolved.protocol)) return resolved.href;
   } catch { /* An absent image can use the local artwork fallback. */ }
-}
-
-export async function getHomepage(): Promise<Homepage> {
-  const base = process.env.STRAPI_URL || 'http://localhost:1337';
-  const response = await fetch(new URL('/api/public-homepage', base), {
-    cache: 'no-store',
-    headers: { Accept: 'application/json' },
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (!response.ok) throw new Error(`Homepage CMS request failed (HTTP ${response.status})`);
-  const json = await response.json() as { data?: Homepage };
-  if (!json.data?.hero?.title) throw new Error('Published homepage content is incomplete.');
-  return json.data;
 }

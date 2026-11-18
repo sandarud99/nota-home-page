@@ -1,0 +1,50 @@
+{
+  "collectionName": "components_sections_finish",
+  "info": {
+    "displayName": "Pen finish",
+    "description": "A full-bleed product scene. Tone is a six-digit hex color."
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 56
+    },
+    "description": {
+      "type": "string",
+      "required": true,
+      "maxLength": 80
+    },
+    "tone": {
+      "type": "string",
+      "required": true,
+      "maxLength": 7,
+      "regex": "^#[0-9a-fA-F]{6}$"
+    },
+    "darkText": {
+      "type": "boolean",
+      "default": false
+    },
+    "alt": {
+      "type": "string",
+      "required": false,
+      "maxLength": 250
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "mobileImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    }
+  }
+}

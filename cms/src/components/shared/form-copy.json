@@ -1,0 +1,64 @@
+{
+  "collectionName": "components_shared_form_copy",
+  "info": {
+    "displayName": "Inquiry form",
+    "description": "Labels and feedback for the early access inquiry form."
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 64
+    },
+    "description": {
+      "type": "text",
+      "required": true,
+      "maxLength": 300
+    },
+    "nameLabel": {
+      "type": "string",
+      "required": true,
+      "maxLength": 64
+    },
+    "emailLabel": {
+      "type": "string",
+      "required": true,
+      "maxLength": 64
+    },
+    "messageLabel": {
+      "type": "string",
+      "required": true,
+      "maxLength": 64
+    },
+    "submitLabel": {
+      "type": "string",
+      "required": true,
+      "maxLength": 64
+    },
+    "closeLabel": {
+      "type": "string",
+      "required": true,
+      "maxLength": 64
+    },
+    "sendingLabel": {
+      "type": "string",
+      "required": true,
+      "maxLength": 64
+    },
+    "successMessage": {
+      "type": "text",
+      "required": true,
+      "maxLength": 300
+    },
+    "errorMessage": {
+      "type": "text",
+      "required": true,
+      "maxLength": 300
+    },
+    "retryMessage": {
+      "type": "text",
+      "required": true,
+      "maxLength": 300
+    }
+  }
+}

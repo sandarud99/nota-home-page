@@ -1,0 +1,35 @@
+{
+  "collectionName": "components_sections_callout",
+  "info": {
+    "displayName": "Product detail",
+    "description": "Macro artwork and an optional caption for the product gallery."
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": false,
+      "maxLength": 115
+    },
+    "alt": {
+      "type": "string",
+      "required": false,
+      "maxLength": 250
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "mobileImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    }
+  }
+}

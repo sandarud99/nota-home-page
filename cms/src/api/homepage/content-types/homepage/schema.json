@@ -1,0 +1,217 @@
+{
+  "kind": "singleType",
+  "collectionName": "homepages",
+  "info": {
+    "singularName": "homepage",
+    "pluralName": "homepages",
+    "displayName": "Homepage",
+    "description": "The public NŌTA homepage. Draft edits appear after publishing."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "brand": {
+      "type": "string",
+      "required": true,
+      "maxLength": 60
+    },
+    "headerWordmark": {
+      "type": "string",
+      "required": true,
+      "maxLength": 60
+    },
+    "brandMark": {
+      "type": "component",
+      "component": "shared.artwork",
+      "required": true,
+      "repeatable": false
+    },
+    "navigation": {
+      "type": "component",
+      "component": "shared.link",
+      "repeatable": true,
+      "required": true,
+      "min": 1,
+      "max": 6
+    },
+    "hero": {
+      "type": "component",
+      "component": "shared.hero",
+      "required": true,
+      "repeatable": false
+    },
+    "menuArtwork": {
+      "type": "component",
+      "component": "shared.artwork",
+      "required": true,
+      "repeatable": false
+    },
+    "specsHeading": {
+      "type": "component",
+      "component": "shared.heading",
+      "required": true,
+      "repeatable": false
+    },
+    "specsArtwork": {
+      "type": "component",
+      "component": "shared.artwork",
+      "required": true,
+      "repeatable": false
+    },
+    "specifications": {
+      "type": "component",
+      "component": "sections.specification",
+      "repeatable": true,
+      "required": true,
+      "min": 3,
+      "max": 3
+    },
+    "manifesto": {
+      "type": "text",
+      "required": true,
+      "maxLength": 900
+    },
+    "audienceHeading": {
+      "type": "component",
+      "component": "shared.heading",
+      "required": true,
+      "repeatable": false
+    },
+    "audienceIntro": {
+      "type": "text",
+      "required": true,
+      "maxLength": 1200
+    },
+    "audiences": {
+      "type": "component",
+      "component": "sections.audience",
+      "repeatable": true,
+      "required": true,
+      "min": 3,
+      "max": 6
+    },
+    "aboutArtwork": {
+      "type": "component",
+      "component": "shared.artwork",
+      "required": true,
+      "repeatable": false
+    },
+    "paperHeading": {
+      "type": "component",
+      "component": "shared.heading",
+      "required": true,
+      "repeatable": false
+    },
+    "paperDetails": {
+      "type": "component",
+      "component": "sections.paper-chapter",
+      "repeatable": true,
+      "required": true,
+      "min": 4,
+      "max": 8
+    },
+    "boxHeading": {
+      "type": "component",
+      "component": "shared.heading",
+      "required": true,
+      "repeatable": false
+    },
+    "boxSet": {
+      "type": "component",
+      "component": "sections.box-item",
+      "required": true,
+      "repeatable": false
+    },
+    "boxProductOverview": {
+      "type": "text",
+      "required": true,
+      "maxLength": 700
+    },
+    "boxItems": {
+      "type": "component",
+      "component": "sections.box-item",
+      "repeatable": true,
+      "required": true,
+      "min": 2,
+      "max": 6
+    },
+    "boxCallouts": {
+      "type": "component",
+      "component": "sections.callout",
+      "repeatable": true,
+      "required": true,
+      "min": 6,
+      "max": 9
+    },
+    "colorsHeading": {
+      "type": "component",
+      "component": "shared.heading",
+      "required": true,
+      "repeatable": false
+    },
+    "colors": {
+      "type": "component",
+      "component": "sections.finish",
+      "repeatable": true,
+      "required": true,
+      "min": 5,
+      "max": 10
+    },
+    "footerDescription": {
+      "type": "text",
+      "required": true,
+      "maxLength": 400
+    },
+    "footerNavigationLabel": {
+      "type": "string",
+      "required": true,
+      "maxLength": 80
+    },
+    "footerLinks": {
+      "type": "component",
+      "component": "shared.link",
+      "repeatable": true,
+      "required": true,
+      "min": 1,
+      "max": 6
+    },
+    "footerYearLabel": {
+      "type": "string",
+      "required": true,
+      "maxLength": 24
+    },
+    "footerYear": {
+      "type": "string",
+      "required": true,
+      "maxLength": 8
+    },
+    "footerCopyright": {
+      "type": "string",
+      "required": true,
+      "maxLength": 120
+    },
+    "footerCredit": {
+      "type": "text",
+      "required": true,
+      "maxLength": 200
+    },
+    "footerProject": {
+      "type": "text",
+      "required": true,
+      "maxLength": 200
+    },
+    "formCopy": {
+      "type": "component",
+      "component": "shared.form-copy",
+      "required": true,
+      "repeatable": false
+    },
+    "seo": {
+      "type": "component",
+      "component": "shared.seo",
+      "required": true,
+      "repeatable": false
+    }
+  }
+}

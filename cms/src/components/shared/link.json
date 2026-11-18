@@ -1,0 +1,20 @@
+{
+  "collectionName": "components_shared_link",
+  "info": {
+    "displayName": "Navigation link",
+    "description": "Choose a homepage section anchor or enter a full HTTPS URL."
+  },
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true,
+      "maxLength": 80
+    },
+    "href": {
+      "type": "string",
+      "required": true,
+      "maxLength": 512,
+      "regex": "^(#(top|main|specifications|who-its-for|about|smartpaper|inside-the-box|finishes)|https://[^\\s]+)$"
+    }
+  }
+}

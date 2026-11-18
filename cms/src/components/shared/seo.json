@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_shared_seo",
+  "info": {
+    "displayName": "Search and social metadata",
+    "description": "Homepage metadata and social preview image."
+  },
+  "attributes": {
+    "metaTitle": {
+      "type": "string",
+      "required": true,
+      "maxLength": 120
+    },
+    "metaDescription": {
+      "type": "text",
+      "required": true,
+      "maxLength": 320
+    },
+    "ogImage": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    }
+  }
+}

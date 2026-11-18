@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_shared_bullet",
+  "info": {
+    "displayName": "Specification line",
+    "description": "One specification or capability per line."
+  },
+  "attributes": {
+    "text": {
+      "type": "string",
+      "required": true,
+      "maxLength": 140
+    }
+  }
+}

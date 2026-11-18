@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "inquiries",
+  "info": {
+    "singularName": "inquiry",
+    "pluralName": "inquiries",
+    "displayName": "Inquiry",
+    "description": "Private early access requests sent from the homepage."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "maxLength": 120,
+      "minLength": 2
+    },
+    "email": {
+      "type": "email",
+      "required": true,
+      "maxLength": 254
+    },
+    "message": {
+      "type": "text",
+      "required": true,
+      "maxLength": 3000,
+      "minLength": 10
+    }
+  }
+}

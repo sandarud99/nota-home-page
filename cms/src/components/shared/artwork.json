@@ -1,0 +1,30 @@
+{
+  "collectionName": "components_shared_artwork",
+  "info": {
+    "displayName": "Responsive artwork",
+    "description": "Choose a primary image, optional mobile crop, and alt text."
+  },
+  "attributes": {
+    "alt": {
+      "type": "string",
+      "required": false,
+      "maxLength": 250
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "mobileImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    }
+  }
+}

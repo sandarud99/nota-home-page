@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_sections_specification",
+  "info": {
+    "displayName": "Specification group",
+    "description": "Groups appear in scroll order. Keep bullet lines short for small screens."
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "text",
+      "required": false,
+      "maxLength": 300
+    },
+    "bullets": {
+      "type": "component",
+      "component": "shared.bullet",
+      "repeatable": true,
+      "required": true,
+      "min": 1,
+      "max": 5
+    }
+  }
+}

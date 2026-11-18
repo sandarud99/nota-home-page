@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_sections_audience",
+  "info": {
+    "displayName": "Audience",
+    "description": "A use case and the value of the writing system for this audience."
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 120
+    },
+    "description": {
+      "type": "text",
+      "required": true,
+      "maxLength": 700
+    }
+  }
+}

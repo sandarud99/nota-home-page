@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
-import { getHomepage, mediaUrl } from '@/lib/strapi';
-import { homepageData } from '@/content/homepage';
-import type { Homepage } from '@/lib/strapi';
+import { getHomepage } from '@/lib/homepage-server';
+import { mediaUrl } from '@/lib/strapi';
 import '@fontsource/instrument-serif/latin-400.css';
 import '@fontsource/instrument-serif/latin-ext-400.css';
 import '@fontsource-variable/dm-sans';
@@ -11,18 +10,22 @@ import './globals.css';
 export const viewport: Viewport = { width: 'device-width', initialScale: 1 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  let homepage: Homepage = homepageData as Homepage;
-  if (process.env.CONTENT_SOURCE === 'strapi') {
-    try { homepage = await getHomepage(); } catch { /* retain a safe noindex error-page title */ }
+  const robots = { index: false, follow: false, googleBot: { index: false, follow: false } };
+  try {
+    const { seo } = await getHomepage();
+    const image = mediaUrl(seo.ogImage, seo.ogImageUrl);
+    const title = seo.metaTitle;
+    const description = seo.metaDescription;
+    return {
+      title,
+      description,
+      robots,
+      metadataBase: new URL(process.env.FRONTEND_PUBLIC_URL || 'http://127.0.0.1:3000'),
+      openGraph: { title, description, type: 'website', images: image ? [image] : [] },
+    };
+  } catch {
+    return { title: 'Homepage temporarily unavailable', robots };
   }
-  const title = homepage.seo?.metaTitle || homepage.brand;
-  const description = homepage.seo?.metaDescription || '';
-  const image = mediaUrl(homepage.seo?.ogImage, homepage.seo?.ogImageUrl);
-  return {
-    title, description,
-    robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
-    openGraph: { title, description, type: 'website', images: image?.startsWith('http') ? [image] : [] },
-  };
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
