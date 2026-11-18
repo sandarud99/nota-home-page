@@ -299,7 +299,6 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
           const panelStarts = [.72, .78, .835, .88, .925, .97];
           const panelEnd = 1.17;
           timeline
-            .set(stage, { zIndex: 1 }, 0)
             .to(select('#smartpaper > .section-title'), { opacity: 0, duration: .20 }, 0)
             .to(dividers, { '--paper-divider': 1, duration: .19, stagger: .05, ease: 'sine.inOut' }, .23)
             .fromTo(slides[0], { autoAlpha: 0 }, { autoAlpha: 1, duration: .43, ease: 'power1.out' }, .76)
@@ -320,15 +319,16 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
             .to(copy[index], { autoAlpha: 0, duration: swap }, midpoint - swap / 2)
             .fromTo(copy[index + 1], { autoAlpha: 0 }, { autoAlpha: 1, duration: swap }, midpoint - swap / 2);
         });
-        timeline.to({}, { duration: .08 }, last);
+        timeline.to({}, { duration: mobile ? last + .08 : distance }, 0);
         if (!mobile) {
           const finalSlide = slides.at(-1)!;
+          const imageFade = .16;
           timeline
-            .to(finalSlide.querySelector('.paper-title'), { autoAlpha: 0, duration: .105, ease: 'power1.inOut' }, last + .52)
-            .to([finalSlide.querySelector('.paper-caption'), controls], { autoAlpha: 0, duration: .18, ease: 'power1.out' }, last + .56)
-            .to(artwork.at(-1)!, { autoAlpha: 0, duration: .16, ease: 'power2.out' }, last + .67)
-            .to(story, { backgroundColor: '#000', duration: .16, ease: 'power2.out' }, '<')
-            .set(stage, { zIndex: 0 }, distance);
+            .to(controls, { autoAlpha: 0, duration: .10, ease: 'power1.inOut' }, last + .32)
+            .to(finalSlide.querySelector('.paper-title'), { autoAlpha: 0, duration: .105, ease: 'power1.inOut' }, '>')
+            .to(finalSlide.querySelector('.paper-caption'), { autoAlpha: 0, duration: .16, ease: 'power1.out' }, '>')
+            .to(artwork.at(-1)!, { autoAlpha: 0, duration: imageFade, ease: 'power2.out' }, '>')
+            .to(story, { backgroundColor: '#000', duration: imageFade, ease: 'power2.out' }, '<');
         }
         track('paper', timeline, slides.length, first / timeline.duration(), last / timeline.duration());
       }
@@ -336,15 +336,17 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       function revealBox() {
         const stage = select('.box-intro');
         const title = select('.box-intro .section-title');
+        const circleEnd = .58;
         const titleStart = .43;
         const titleEnd = 1.11;
         const travel = 1.25;
-        // Meet the black Smartpaper frame at pin release and carry the circle into the box heading.
+        // Align the pins and hide the overlapping box section until its pin takes over.
         gsap.set(boxSection, { '--box-overlap': 'calc(0px - var(--box-intro-height))' });
         pin(stage, travel, trigger => positionAnchor(boxSection, trigger, titleEnd))
           .to({}, { duration: travel }, 0)
+          .fromTo(boxSection, { visibility: 'hidden' }, { visibility: 'visible', duration: circleEnd }, 0)
           .fromTo(title, { clipPath: 'circle(0% at 50% 50%)' }, {
-            clipPath: 'circle(72% at 50% 50%)', duration: .58, ease: 'power1.in',
+            clipPath: 'circle(72% at 50% 50%)', duration: circleEnd, ease: 'power1.in',
           }, 0)
           .fromTo(title.children, { opacity: 0 }, {
             opacity: 1, duration: titleEnd - titleStart, ease: 'sine.inOut',

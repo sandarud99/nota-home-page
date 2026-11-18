@@ -479,7 +479,7 @@ test('the pinned Smartpaper heading fades into dividers and a stepped notebook r
   await expect(title).toHaveCSS('opacity', '1');
 });
 
-test('Smartpaper scales the chapter images, keeps the glass captions, and fades to black', async ({ page }) => {
+test('Smartpaper scales the chapter images, keeps the glass captions, and fades to black in order', async ({ page }) => {
   const height = 805;
   await page.setViewportSize({ width: 1470, height });
   await page.goto('/');
@@ -531,23 +531,60 @@ test('Smartpaper scales the chapter images, keeps the glass captions, and fades 
   const finalTitle = slides.last().locator('.paper-title');
   const finalCaption = slides.last().locator('.paper-caption');
   const finalImage = slides.last().locator('.artwork');
+  const intro = page.locator('.box-intro');
+  const circle = intro.locator('.section-title');
+  const collapsedCircle = 'circle(0% at 50% 50%)';
+  const sliderCoversBottom = () => stage.evaluate(node => node.contains(document.elementFromPoint(innerWidth / 2, innerHeight - 12)));
 
-  await seek(4.775);
-  await expect.poll(() => opacity(finalTitle)).toBeLessThan(.95);
+  await seek(4.23);
+  await expect(controls.locator('[aria-current]')).toHaveAccessibleName('Your notes. Already there.');
+  await expect(controls).toHaveCSS('opacity', '1');
+  await expect.poll(sliderCoversBottom).toBe(true);
+
+  await seek(4.59);
+  await expect.poll(() => opacity(controls)).toBeLessThan(.95);
+  expect(await opacity(controls)).toBeGreaterThan(.05);
+  await expect(finalTitle).toHaveCSS('opacity', '1');
   await expect(finalCaption).toHaveCSS('opacity', '1');
   await expect(finalImage).toHaveCSS('opacity', '1');
-  await seek(4.87);
-  await expect(finalTitle).toHaveCSS('opacity', '0');
-  await expect.poll(() => opacity(finalCaption)).toBeLessThan(.6);
+
+  await seek(4.70);
+  await expect(controls).toBeHidden();
+  await expect.poll(() => opacity(finalTitle)).toBeLessThan(.95);
+  expect(await opacity(finalTitle)).toBeGreaterThan(.05);
+  await expect(finalCaption).toHaveCSS('opacity', '1');
   await expect(finalImage).toHaveCSS('opacity', '1');
-  await seek(4.99);
+
+  await seek(4.83);
+  await expect(finalTitle).toHaveCSS('opacity', '0');
+  await expect.poll(() => opacity(finalCaption)).toBeLessThan(.95);
+  expect(await opacity(finalCaption)).toBeGreaterThan(.05);
+  await expect(finalImage).toHaveCSS('opacity', '1');
+
+  await seek(4.985);
   await expect(finalCaption).toHaveCSS('opacity', '0');
-  await expect.poll(() => opacity(finalImage)).toBeLessThan(.4);
-  await seek(5.08);
+  await expect.poll(() => opacity(finalImage)).toBeLessThan(.95);
+  const fadingImage = await opacity(finalImage);
+  expect(fadingImage).toBeGreaterThan(.05);
+  await expectPinned(stage);
+
+  await seek(5.095);
   await expect(finalImage).toHaveCSS('opacity', '0');
   await expect(stage.locator('.paper-story')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
-  await expect(controls).toBeHidden();
-  await expect(page.locator('.box-intro .section-title')).toHaveCSS('clip-path', 'circle(0% at 50% 50%)');
+  await expectPinned(stage);
+  await expect.poll(sliderCoversBottom).toBe(true);
+  await expect(circle).toHaveCSS('clip-path', collapsedCircle);
+
+  await seek(5.19);
+  await expectPinned(intro);
+  await expect(intro).toBeVisible();
+  await expect(circle).not.toHaveCSS('clip-path', collapsedCircle);
+
+  await seek(4.985);
+  await expectPinned(stage);
+  await expect.poll(sliderCoversBottom).toBe(true);
+  await expect.poll(() => opacity(finalImage)).toBeCloseTo(fadingImage, 3);
+  await expect(circle).toHaveCSS('clip-path', collapsedCircle);
 
   await seek(4.23);
   await expectPinned(stage);
