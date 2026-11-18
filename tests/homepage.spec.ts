@@ -338,6 +338,75 @@ test('the center-out split hands off to the pinned manifesto and audience fades'
   await expect(audience).toHaveCSS('opacity', '1');
 });
 
+test('audience profiles slide in order and the pen zoom gives way to Smartpaper', async ({ page }) => {
+  const width = 1470;
+  const height = 805;
+  await page.setViewportSize({ width, height });
+  await page.goto('/');
+  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+  const articles = page.locator('.audience-list article');
+  const about = page.locator('#about');
+  const panel = about.locator('.about-panel');
+  const paper = page.locator('#smartpaper');
+  const leftEdges = () => articles.evaluateAll(rows => rows.map(row => Math.round(row.getBoundingClientRect().left)));
+  const pageTop = (locator: Locator) => locator.evaluate(element => element.getBoundingClientRect().top + scrollY);
+  const scroll = (top: number) => page.evaluate(top => scrollTo({ top, behavior: 'instant' }), top);
+  const opacity = () => panel.evaluate(element => Number(getComputedStyle(element).opacity));
+
+  const start = (await pageTop(articles.first())) - height * .62;
+  await scroll(start - 5);
+  await expect.poll(async () => (await leftEdges()).every(left => left >= width)).toBe(true);
+  const hidden = await leftEdges();
+
+  await scroll(start + height * .085);
+  await expect.poll(async () => (await leftEdges())[0]).toBeLessThan(width - 20);
+  expect((await leftEdges()).slice(1)).toEqual(hidden.slice(1));
+
+  await scroll(start + height * .20);
+  await expect.poll(async () => (await leftEdges())[1]).toBeLessThan(hidden[1] - 20);
+  const secondEntry = await leftEdges();
+  expect(secondEntry[0]).toBeLessThan(secondEntry[1]);
+  expect(secondEntry[2]).toBe(hidden[2]);
+
+  await scroll(start + height * .32);
+  await expect.poll(async () => (await leftEdges())[2]).toBeLessThan(hidden[2] - 10);
+  await scroll(start + height * .70);
+  await expect.poll(async () => new Set(await leftEdges()).size).toBe(1);
+  expect((await leftEdges())[0]).toBeLessThan(width * .70);
+  await scroll(start + height * .20);
+  await expect.poll(leftEdges).toEqual(secondEntry);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+
+  const aboutTop = await pageTop(about);
+  await scroll(aboutTop - height * .76);
+  await expect.poll(async () => (await panel.boundingBox())!.x).toBeGreaterThan(width * .45);
+  const thumbnail = (await panel.boundingBox())!;
+  expect(thumbnail.width).toBeLessThan(width * .55);
+
+  await scroll(aboutTop + height * .05);
+  await expect.poll(async () => (await panel.boundingBox())!.width).toBeGreaterThan(width * .90);
+  const fullFrame = (await panel.boundingBox())!;
+  expect(fullFrame.x + fullFrame.width / 2).toBeCloseTo(width / 2, 0);
+  expect(Math.abs(fullFrame.y + fullFrame.height / 2 - height / 2)).toBeLessThan(3);
+  await expect(panel).toHaveCSS('opacity', '1');
+
+  await scroll(aboutTop + height * 1.02);
+  await expect.poll(opacity).toBeLessThan(.65);
+  expect(await opacity()).toBeGreaterThan(.4);
+  expect((await panel.boundingBox())!.width).toBeLessThan(fullFrame.width - 150);
+  await expect(paper).toBeInViewport();
+  expect(await paper.evaluate(section => section.contains(document.elementFromPoint(innerWidth / 2, innerHeight * .80)))).toBe(true);
+
+  await scroll(aboutTop + height * .05);
+  await expect(panel).toHaveCSS('opacity', '1');
+  await expect.poll(async () => (await panel.boundingBox())!.width).toBeCloseTo(fullFrame.width, 0);
+
+  await page.goto('about:blank');
+  await page.goto('/#about');
+  await expect.poll(async () => (await panel.boundingBox())!.width).toBeGreaterThan(width * .90);
+  await expect(panel).toBeInViewport();
+});
+
 test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');

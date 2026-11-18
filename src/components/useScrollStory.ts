@@ -22,6 +22,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
     const progress = select('.page-progress');
     const specSection = select('#specifications');
     const audience = select('#who-its-for');
+    const about = select('#about');
     const updateProgress = () => {
       const scroller = document.scrollingElement!;
       const distance = scroller.scrollHeight - scroller.clientHeight;
@@ -34,7 +35,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
     const media = gsap.matchMedia(page);
     let refreshFrame = 0;
     let disposed = false;
-    let pendingAnchor = [specSection, audience].find(section => location.hash === `#${section.id}`);
+    let pendingAnchor = [specSection, audience, about].find(section => location.hash === `#${section.id}`);
     let pendingAnchorTop: number | undefined;
     const refresh = () => {
       cancelAnimationFrame(refreshFrame);
@@ -65,12 +66,12 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       const tick = (time: number) => smooth.raf(time * 1000);
       gsap.ticker.add(tick);
 
-      const pin = (stage: HTMLElement, travel: number, onRefresh?: (trigger: ScrollTrigger) => void) => gsap.timeline({
+      const pin = (stage: HTMLElement, travel: number | `${number}%`, onRefresh?: (trigger: ScrollTrigger) => void) => gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: {
           trigger: stage,
           start: 'top top',
-          end: () => `+=${Math.round(stage.offsetHeight * travel)}`,
+          end: typeof travel === 'number' ? () => `+=${Math.round(stage.offsetHeight * travel)}` : `+=${travel}`,
           pin: true,
           scrub: true,
           invalidateOnRefresh: true,
@@ -228,19 +229,46 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
         });
       } else {
         const thought = select('.thought-intro');
-        const travel = 1.15;
-        pin(thought, travel, trigger => positionAnchor(audience, trigger, .83, audience.offsetTop))
-          .to({}, { duration: travel }, 0)
+        pin(thought, '115%', trigger => positionAnchor(audience, trigger, .83, audience.offsetTop))
+          .to({}, { duration: 1.15 }, 0)
           .fromTo(manifesto, { opacity: 0 }, { opacity: 1, duration: .25, ease: 'power1.in' }, .043)
           .fromTo(letters, { opacity: .28 }, brighten, .268)
           .fromTo(audience, { opacity: 0 }, { opacity: 1, duration: .45, ease: 'power1.inOut' }, .30);
-      }
 
-      const about = select('.about-visual');
-      if (!mobile) {
-        gsap.fromTo(about.querySelector('.about-panel'), { scale: .82 }, { scale: 1, duration: .62, scrollTrigger: {
-          trigger: about, start: 'top bottom', end: 'top top', scrub: true,
-        } });
+        const articles = select('.audience-list').querySelectorAll('article');
+        const slideTime = .40;
+        const stagger = .135;
+        gsap.set(articles, { xPercent: 110 });
+        gsap.to(articles, {
+          xPercent: 0, duration: slideTime, stagger, ease: 'sine.inOut',
+          scrollTrigger: {
+            trigger: articles[0], start: 'top 62%',
+            end: () => `+=${Math.round(window.innerHeight * (slideTime + stagger * (articles.length - 1)))}`,
+            scrub: true, invalidateOnRefresh: true,
+          },
+        });
+
+        const panel = select('.about-panel');
+        const aboutScreens = 1.8;
+        const sceneHeight = () => about.offsetHeight / aboutScreens;
+        const thumbnail = .50;
+        gsap.set(about, { '--about-screens': aboutScreens });
+        gsap.timeline({
+          defaults: { ease: 'none' },
+          scrollTrigger: {
+            trigger: about, start: 'top bottom', end: 'bottom top', scrub: true, invalidateOnRefresh: true,
+          },
+        })
+          .fromTo(panel, {
+            scale: thumbnail,
+            opacity: 1,
+            x: () => panel.offsetWidth * (1 - thumbnail) / 2,
+            y: () => (panel.offsetHeight * thumbnail - sceneHeight()) / 2,
+          }, { x: 0, y: 0, scale: 1, duration: .86, ease: 'sine.inOut' }, .14)
+          // Counter the document scroll so the white section can pass over the centered pen.
+          .to(panel, { y: () => about.offsetHeight - sceneHeight() * .04, duration: aboutScreens }, 1)
+          .to(panel, { scale: .69, opacity: .24, duration: 1.47, ease: 'sine.inOut' }, 1.22)
+          .to(panel, { opacity: 0, duration: .11 }, '>');
       }
 
       function pinDeck(name: 'paper' | 'finishes', className: string, screens: number, circle = false) {

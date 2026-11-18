@@ -83,7 +83,7 @@ export const homepageData = {
     { title: 'Creators, Designers & Architects', description: 'Sketches, diagrams, concepts, and fragments of ideas belong on paper. This tool makes sure they don’t disappear. Everything drawn or written is safely stored, easy to revisit, and ready to evolve into something bigger — without interrupting the creative flow.' },
     { title: 'Managers & Product Thinkers', description: 'Meetings start on paper and end with structure. Notes turn into clear summaries, tasks, and follow-ups. The pen captures everything quietly, while the app helps organize decisions without pulling attention away from the room.' },
   ],
-  aboutArtwork: artwork('hero-desktop', 'Close-up of the precision nib'),
+  aboutArtwork: artwork('spec-profile', 'Silver NŌTA fountain pen', 'hero-desktop'),
   paperHeading: { title: 'Works with\nsmart paper' },
   paperDetails: [
     { title: 'We use special paper\nwith a nearly invisible\npattern', caption: 'For the pen, it’s a precise map', description: 'The pattern defines exact coordinates across the page, allowing the pen to capture every stroke with precision and consistency. For you, it feels like ordinary paper. For the system, it becomes a stable reference that turns handwriting into structured, accurate digital data.', ...artwork('paper-cover', 'Closed NŌTA SmartPaper notebook', 'paper-cover-mobile') },
