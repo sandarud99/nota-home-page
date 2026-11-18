@@ -32,7 +32,7 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
       const response = await page.goto('/');
       expect(response?.status()).toBe(200);
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Smart pen\s+for real thinking/);
-      await expect(page.locator('.pin-spacer')).toHaveCount(width < 992 ? 4 : 5);
+      await expect(page.locator('.pin-spacer')).toHaveCount(width < 992 ? 4 : 6);
       if (width < 992) await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible();
       else await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
       const images = await page.locator('.artwork img').evaluateAll(async images => {
@@ -108,7 +108,7 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
 test('desktop hero, sliding menu and panel wipe follow the scroll in both directions', async ({ page }) => {
   await page.setViewportSize({ width: 1470, height: 762 });
   await page.goto('/');
-  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+  await expect(page.locator('.pin-spacer')).toHaveCount(6);
   const hero = page.locator('.hero');
   const camera = hero.locator('.hero-camera');
   const profile = hero.locator('.hero-profile');
@@ -203,7 +203,7 @@ test('Specifications cards rise from below in order and align when settled', asy
   const height = 805;
   await page.setViewportSize({ width: 1470, height });
   await page.goto('/');
-  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+  await expect(page.locator('.pin-spacer')).toHaveCount(6);
   const stage = page.locator('.spec-scene');
   const cards = stage.locator('.spec-card');
   await expect(cards.locator('h3')).toHaveText(['Writing System', 'Capture Technology', 'Digital Continuity']);
@@ -265,7 +265,7 @@ test('the center-out split hands off to the pinned manifesto and audience fades'
   const width = 1470;
   await page.setViewportSize({ width, height: 805 });
   await page.goto('/');
-  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+  await expect(page.locator('.pin-spacer')).toHaveCount(6);
   const specs = page.locator('.spec-scene');
   const bands = specs.locator('.spec-exit-wipe i');
   const thought = page.locator('.thought-intro');
@@ -343,7 +343,7 @@ test('audience profiles slide in order and the pen zoom gives way to Smartpaper'
   const height = 805;
   await page.setViewportSize({ width, height });
   await page.goto('/');
-  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+  await expect(page.locator('.pin-spacer')).toHaveCount(6);
   const articles = page.locator('.audience-list article');
   const about = page.locator('#about');
   const panel = about.locator('.about-panel');
@@ -411,7 +411,7 @@ test('the pinned Smartpaper heading fades into dividers and a stepped notebook r
   const height = 805;
   await page.setViewportSize({ width: 1470, height });
   await page.goto('/');
-  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+  await expect(page.locator('.pin-spacer')).toHaveCount(6);
   const stage = page.locator('#smartpaper');
   const title = stage.locator('.section-title');
   const notebook = stage.locator('.paper-slide').first();
@@ -479,11 +479,11 @@ test('the pinned Smartpaper heading fades into dividers and a stepped notebook r
   await expect(title).toHaveCSS('opacity', '1');
 });
 
-test('Smartpaper scales the chapter images and fades to black before the white dot', async ({ page }) => {
+test('Smartpaper scales the chapter images, keeps the glass captions, and fades to black', async ({ page }) => {
   const height = 805;
   await page.setViewportSize({ width: 1470, height });
   await page.goto('/');
-  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+  await expect(page.locator('.pin-spacer')).toHaveCount(6);
   const stage = page.locator('#smartpaper');
   const slides = stage.locator('.paper-slide');
   const startingImage = slides.first().locator('.artwork');
@@ -520,10 +520,17 @@ test('Smartpaper scales the chapter images and fades to black before the white d
   expect((await nextImage.boundingBox())!.width).toBeLessThan(enteringWidth);
   expect(await opacity(nextImage)).toBeLessThan(1);
 
+  await seek(3.35);
+  const glass = slides.nth(2).locator('.paper-caption');
+  await expect(glass.getByRole('heading', { name: 'AI-powered structure' })).toBeVisible();
+  for (const child of ['h4', 'p']) {
+    await expect(glass.locator(child)).toHaveCSS('backdrop-filter', 'blur(24px)');
+    await expect(glass.locator(child)).toHaveCSS('background-color', 'rgba(255, 255, 255, 0.055)');
+  }
+
   const finalTitle = slides.last().locator('.paper-title');
   const finalCaption = slides.last().locator('.paper-caption');
   const finalImage = slides.last().locator('.artwork');
-  const dot = stage.locator('.paper-wipe');
 
   await seek(4.775);
   await expect.poll(() => opacity(finalTitle)).toBeLessThan(.95);
@@ -540,14 +547,7 @@ test('Smartpaper scales the chapter images and fades to black before the white d
   await expect(finalImage).toHaveCSS('opacity', '0');
   await expect(stage.locator('.paper-story')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   await expect(controls).toBeHidden();
-  await expect(dot).toHaveCSS('clip-path', 'circle(0% at 50% 50%)');
-
-  await seek(5.20);
-  await expect(dot).not.toHaveCSS('clip-path', 'circle(0% at 50% 50%)');
-  const small = await dot.evaluate(node => parseFloat(getComputedStyle(node).clipPath.slice(7)));
-  expect(small).toBeLessThan(4);
-  await seek(5.42);
-  await expect.poll(() => dot.evaluate(node => parseFloat(getComputedStyle(node).clipPath.slice(7)))).toBeGreaterThan(20);
+  await expect(page.locator('.box-intro .section-title')).toHaveCSS('clip-path', 'circle(0% at 50% 50%)');
 
   await seek(4.23);
   await expectPinned(stage);
@@ -557,10 +557,83 @@ test('Smartpaper scales the chapter images and fades to black before the white d
   await expect(controls.locator('[aria-current]')).toHaveAccessibleName('Your notes. Already there.');
 });
 
+test('Inside the box fades in within the circle and reveals the kit before its caption', async ({ page }) => {
+  const height = 805;
+  await page.setViewportSize({ width: 1470, height });
+  await page.goto('/');
+  await expect(page.locator('.pin-spacer')).toHaveCount(6);
+  await page.evaluate(() => document.fonts.ready);
+
+  const intro = page.locator('.box-intro');
+  const title = intro.locator('#box-heading');
+  const circle = intro.locator('.section-title');
+  const kit = page.locator('.box-set');
+  const caption = kit.locator('.box-item-copy');
+  const radius = () => circle.evaluate(node => parseFloat(getComputedStyle(node).clipPath.slice(7)));
+  const opacity = (target: Locator) => target.evaluate(node => Number(getComputedStyle(node).opacity));
+  const shutter = () => kit.evaluate(node => parseFloat(getComputedStyle(node).getPropertyValue('--box-shutter')));
+  const { end: paperEnd } = await scrollInScene(page.locator('#smartpaper'), .99);
+  const { start, end } = await scrollInScene(intro, .084);
+
+  expect(Math.abs(start - paperEnd)).toBeLessThan(2);
+  await expectPinned(intro);
+  await expect.poll(radius).toBeGreaterThan(0);
+  expect(await radius()).toBeLessThan(4);
+  await expect(title).toHaveCSS('opacity', '0');
+
+  await scrollInScene(intro, .44);
+  await expect.poll(radius).toBeGreaterThan(55);
+  expect(await radius()).toBeLessThan(Math.SQRT1_2 * 100);
+  await expect.poll(() => opacity(title)).toBeGreaterThan(.04);
+  const fadingTitle = await opacity(title);
+  expect(fadingTitle).toBeLessThan(.18);
+  const titleTop = (await title.boundingBox())!.y;
+
+  await scrollInScene(intro, .92);
+  await expect(title).toHaveCSS('opacity', '1');
+  await expectPinned(intro);
+  expect((await title.boundingBox())!.y).toBeCloseTo(titleTop, 0);
+
+  await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), end + 205);
+  await expect.poll(async () => (await title.boundingBox())!.y).toBeLessThan(titleTop - 180);
+
+  const kitTop = await kit.evaluate(node => node.getBoundingClientRect().top + scrollY);
+  const seekKit = (inset: number) => page.evaluate(top => scrollTo({ top, behavior: 'instant' }), kitTop - height * inset);
+  await seekKit(.735);
+  await expect.poll(shutter).toBeLessThan(.75);
+  const narrowBands = await shutter();
+  expect(narrowBands).toBeGreaterThan(.55);
+  await expect(caption).toHaveCSS('opacity', '0');
+
+  await seekKit(.58);
+  await expect.poll(shutter).toBeLessThan(narrowBands - .2);
+  expect(await shutter()).toBeGreaterThan(0);
+  await expect(caption).toHaveCSS('opacity', '0');
+
+  await seekKit(.21);
+  await expect.poll(shutter).toBe(0);
+  await expect.poll(() => opacity(caption)).toBeGreaterThan(.4);
+  expect(await opacity(caption)).toBeLessThan(1);
+  await seekKit(.11);
+  await expect(caption).toHaveCSS('opacity', '1');
+
+  await seekKit(.735);
+  await expect.poll(shutter).toBeCloseTo(narrowBands, 3);
+  await expect(caption).toHaveCSS('opacity', '0');
+  await scrollInScene(intro, .44);
+  await expectPinned(intro);
+  await expect.poll(() => opacity(title)).toBeCloseTo(fadingTitle, 3);
+
+  await page.goto('about:blank');
+  await page.goto('/#inside-the-box');
+  await expect(title).toBeInViewport();
+  await expect(title).toHaveCSS('opacity', '1');
+});
+
 test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
-  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+  await expect(page.locator('.pin-spacer')).toHaveCount(6);
   const paper = page.locator('#smartpaper');
   await scrollInScene(paper, .32);
   await expectPinned(paper);
@@ -664,7 +737,7 @@ test('reduced motion exposes every chapter without pinning', async ({ page }) =>
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await expect(page.locator('.pin-spacer')).toHaveCount(0);
-  for (const label of ['Writing System', 'Capture Technology', 'Digital Continuity', 'AI-powered structure', 'Your notes. Already there.', 'Bright Orange.']) {
+  for (const label of ['Writing System', 'Capture Technology', 'Digital Continuity', 'AI-powered structure', 'Your notes. Already there.', 'Inside the box', 'A complete, ready-to-use set', 'Bright Orange.']) {
     await expect(page.getByRole('heading', { name: label })).toBeVisible();
   }
   await expect(page.getByRole('group', { name: 'pen finish' })).toBeHidden();

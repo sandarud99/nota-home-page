@@ -327,12 +327,13 @@ export default function Experience({ data: d }: { data: Homepage }) {
           <SceneControls index={active.paper} titles={d.paperDetails.map(item => item.caption)} label="Smartpaper chapter" arrows={false}
             select={index => goToScene('paper', index)} />
           <Wipe panels={wipeColumns} className="scene-wipe paper-entry-wipe" />
-          <div className="paper-wipe" aria-hidden="true" />
         </div>
       </section>
 
       <section id="inside-the-box" aria-labelledby="box-heading">
-        <SectionTitle id="box-heading" heading={d.boxHeading} />
+        <div className="box-intro">
+          <SectionTitle id="box-heading" heading={d.boxHeading} />
+        </div>
         <div className="box-contents">
           <BoxItem item={d.boxSet} className="box-set" />
           <p className="box-overview">{d.boxProductOverview}</p>

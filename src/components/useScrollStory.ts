@@ -24,6 +24,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
     const audience = select('#who-its-for');
     const about = select('#about');
     const smartpaper = select('#smartpaper');
+    const boxSection = select('#inside-the-box');
     const updateProgress = () => {
       const scroller = document.scrollingElement!;
       const distance = scroller.scrollHeight - scroller.clientHeight;
@@ -36,7 +37,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
     const media = gsap.matchMedia(page);
     let refreshFrame = 0;
     let disposed = false;
-    let pendingAnchor = [specSection, audience, about, smartpaper].find(section => location.hash === `#${section.id}`);
+    let pendingAnchor = [specSection, audience, about, smartpaper, boxSection].find(section => location.hash === `#${section.id}`);
     let pendingAnchorTop: number | undefined;
     const refresh = () => {
       cancelAnimationFrame(refreshFrame);
@@ -288,9 +289,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
         const first = mobile ? 0 : 1.59;
         const step = mobile ? 1 : .88;
         const last = first + (slides.length - 1) * step;
-        const dotStart = last + .88;
-        const dotDuration = .54;
-        const distance = mobile ? Math.max(1, slides.length - 1) * .52 : dotStart + dotDuration;
+        const distance = mobile ? Math.max(1, slides.length - 1) * .52 : last + .88;
         const timeline = pin(stage, distance, mobile ? undefined : trigger => {
           if (pendingAnchor === smartpaper) pendingAnchorTop = trigger.start;
         });
@@ -300,6 +299,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
           const panelStarts = [.72, .78, .835, .88, .925, .97];
           const panelEnd = 1.17;
           timeline
+            .set(stage, { zIndex: 1 }, 0)
             .to(select('#smartpaper > .section-title'), { opacity: 0, duration: .20 }, 0)
             .to(dividers, { '--paper-divider': 1, duration: .19, stagger: .05, ease: 'sine.inOut' }, .23)
             .fromTo(slides[0], { autoAlpha: 0 }, { autoAlpha: 1, duration: .43, ease: 'power1.out' }, .76)
@@ -328,9 +328,36 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
             .to([finalSlide.querySelector('.paper-caption'), controls], { autoAlpha: 0, duration: .18, ease: 'power1.out' }, last + .56)
             .to(artwork.at(-1)!, { autoAlpha: 0, duration: .16, ease: 'power2.out' }, last + .67)
             .to(story, { backgroundColor: '#000', duration: .16, ease: 'power2.out' }, '<')
-            .to(stage.querySelector('.paper-wipe'), { clipPath: 'circle(72% at 50% 50%)', duration: dotDuration, ease: 'power1.in' }, dotStart);
+            .set(stage, { zIndex: 0 }, distance);
         }
         track('paper', timeline, slides.length, first / timeline.duration(), last / timeline.duration());
+      }
+
+      function revealBox() {
+        const stage = select('.box-intro');
+        const title = select('.box-intro .section-title');
+        const panel = select('.box-set');
+        const titleStart = .43;
+        const titleEnd = 1.11;
+        const travel = 1.25;
+        // Meet the black Smartpaper frame at pin release and carry the circle into the box heading.
+        gsap.set(boxSection, { '--box-overlap': 'calc(0px - var(--box-intro-height))' });
+        pin(stage, travel, trigger => positionAnchor(boxSection, trigger, titleEnd))
+          .to({}, { duration: travel }, 0)
+          .fromTo(title, { clipPath: 'circle(0% at 50% 50%)' }, {
+            clipPath: 'circle(72% at 50% 50%)', duration: .58, ease: 'power1.in',
+          }, 0)
+          .fromTo(title.children, { opacity: 0 }, {
+            opacity: 1, duration: titleEnd - titleStart, ease: 'sine.inOut',
+          }, titleStart);
+
+        gsap.timeline({
+          scrollTrigger: { trigger: panel, start: 'top bottom', end: 'top 12%', scrub: true },
+        })
+          .fromTo(panel, { '--box-shutter': 1 }, { '--box-shutter': 0, duration: .81, ease: 'sine.inOut' })
+          .fromTo(panel.querySelector('.box-item-copy'), { opacity: 0 }, {
+            opacity: 1, duration: .19, ease: 'power1.out',
+          });
       }
 
       function pinFinishes() {
@@ -352,12 +379,14 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       }
 
       pinPaper();
+      if (!mobile) revealBox();
       pinFinishes();
       updateProgress();
 
       return () => {
         specSection.style.removeProperty('scroll-margin-top');
         audience.style.removeProperty('scroll-margin-top');
+        boxSection.style.removeProperty('scroll-margin-top');
         pendingAnchorTop = undefined;
         chapters.current = {};
         lenis.current = null;
