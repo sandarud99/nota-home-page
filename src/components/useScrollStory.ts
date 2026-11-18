@@ -23,6 +23,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
     const specSection = select('#specifications');
     const audience = select('#who-its-for');
     const about = select('#about');
+    const smartpaper = select('#smartpaper');
     const updateProgress = () => {
       const scroller = document.scrollingElement!;
       const distance = scroller.scrollHeight - scroller.clientHeight;
@@ -35,7 +36,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
     const media = gsap.matchMedia(page);
     let refreshFrame = 0;
     let disposed = false;
-    let pendingAnchor = [specSection, audience, about].find(section => location.hash === `#${section.id}`);
+    let pendingAnchor = [specSection, audience, about, smartpaper].find(section => location.hash === `#${section.id}`);
     let pendingAnchorTop: number | undefined;
     const refresh = () => {
       cancelAnimationFrame(refreshFrame);
@@ -46,6 +47,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
           pendingAnchor = undefined;
           if (top > window.scrollY) window.scrollTo({ top, behavior: 'instant' });
         }
+        lenis.current?.resize();
         updateProgress();
       });
     };
@@ -271,19 +273,34 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
           .to(panel, { opacity: 0, duration: .11 }, '>');
       }
 
-      function pinDeck(name: 'paper' | 'finishes', className: string, screens: number, circle = false) {
-        const stage = select(className);
+      function pinDeck(name: 'paper' | 'finishes', stage: HTMLElement, screens: number) {
         const slides = Array.from(stage.querySelectorAll<HTMLElement>('.chapter-slide'));
-        const intro = circle && !mobile ? .44 : 0;
-        const last = intro + slides.length - 1;
-        const timeline = pin(stage, Math.max(1, slides.length - 1) * screens + (circle && !mobile ? .53 : 0));
-        if (intro) {
-          timeline.fromTo(stage.querySelectorAll('.scene-wipe i'), { scaleY: 1 }, {
-            scaleY: 0, stagger: .04, duration: .20,
-          }, 0);
+        const desktopPaper = name === 'paper' && !mobile;
+        const first = desktopPaper ? 1.65 : 0;
+        const step = desktopPaper ? screens : 1;
+        const last = first + (slides.length - 1) * step;
+        const distance = desktopPaper ? last + .48 : Math.max(1, slides.length - 1) * screens;
+        const timeline = pin(stage, distance, desktopPaper ? trigger => {
+          if (pendingAnchor === smartpaper) pendingAnchorTop = trigger.start;
+        } : undefined);
+        if (desktopPaper) {
+          const panels = Array.from(stage.querySelectorAll('.paper-entry-wipe i'));
+          const dividers = panels.slice(0, -1).reverse();
+          const panelStarts = [.72, .78, .835, .88, .925, .97];
+          const panelEnd = 1.17;
+          timeline
+            .to(select('#smartpaper > .section-title'), { opacity: 0, duration: .20 }, 0)
+            .to(dividers, { '--paper-divider': 1, duration: .19, stagger: .05, ease: 'sine.inOut' }, .23)
+            .fromTo(slides[0], { autoAlpha: 0 }, { autoAlpha: 1, duration: .43, ease: 'power1.out' }, .76)
+            .fromTo(stage.querySelector('.scene-controls'), { autoAlpha: 0 }, { autoAlpha: 1, duration: .12 }, panelEnd);
+          // Start at the left and let all six panels clear the stage together.
+          panels.forEach((panel, index) => {
+            const start = panelStarts[index];
+            timeline.to(panel, { yPercent: 100, duration: panelEnd - start, ease: 'sine.inOut' }, start);
+          });
         }
         slides.slice(1).forEach((slide, offset) => {
-          const index = intro + offset + 1;
+          const index = first + (offset + 1) * step;
           const previous = slides[offset];
           timeline
             .to(previous.querySelectorAll('.chapter-copy'), { autoAlpha: 0, y: -12, duration: .21 }, index - .78)
@@ -292,16 +309,16 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
             .fromTo(slide.querySelectorAll('.chapter-copy'), { autoAlpha: 0, y: 13 }, { autoAlpha: 1, y: 0, duration: .29 }, index - .54);
         });
         timeline.to({}, { duration: .08 }, last);
-        if (circle && !mobile) {
+        if (desktopPaper) {
           timeline.fromTo(stage.querySelector('.paper-wipe'), { clipPath: 'circle(0% at 50% 50%)' }, {
             clipPath: 'circle(76% at 50% 50%)', duration: .37,
           }, last + .11);
         }
-        track(name, timeline, slides.length, intro / timeline.duration(), Math.max(.01, last / timeline.duration()));
+        track(name, timeline, slides.length, first / timeline.duration(), Math.max(.01, last / timeline.duration()));
       }
 
-      pinDeck('paper', '.paper-story', mobile ? .52 : 1.25, true);
-      pinDeck('finishes', '.finish-frame', mobile ? .42 : .79);
+      pinDeck('paper', mobile ? select('.paper-story') : smartpaper, mobile ? .52 : 1.08);
+      pinDeck('finishes', select('.finish-frame'), mobile ? .42 : .79);
       updateProgress();
 
       return () => {

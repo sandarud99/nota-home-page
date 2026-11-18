@@ -45,9 +45,9 @@ function SectionTitle({ id, heading }: { id: string; heading: Heading }) {
   </div>;
 }
 
-const heroWipeColumns = 6;
+const wipeColumns = 6;
 
-function Wipe({ panels = 7, className = 'scene-wipe' }: { panels?: number; className?: string }) {
+function Wipe({ panels, className = 'scene-wipe' }: { panels: number; className?: string }) {
   return <div className={className} aria-hidden="true">
     {Array.from({ length: panels }, (_, i) => <i key={i} />)}
   </div>;
@@ -265,13 +265,13 @@ export default function Experience({ data: d }: { data: Homepage }) {
             </button>
           </header>
           <h1 id="hero-heading" className="hero-title">{d.hero.title}</h1>
-          <Wipe panels={heroWipeColumns} />
+          <Wipe panels={wipeColumns} />
         </section>
       </div>
 
       <section id="specifications" aria-labelledby="specs-heading">
         <div className="spec-scene">
-          <Wipe panels={heroWipeColumns} className="spec-intro-lines" />
+          <Wipe panels={wipeColumns} className="spec-intro-lines" />
           <SectionTitle id="specs-heading" heading={d.specsHeading} />
           <ImageView artwork={d.specsArtwork} className="spec-pen" fallback="/art/pen-transparent.svg" />
           <div className="spec-cards">
@@ -322,7 +322,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
           </article>)}
           <SceneControls index={active.paper} titles={d.paperDetails.map(item => item.caption)} label="Smartpaper chapter"
             select={index => goToScene('paper', index)} />
-          <Wipe />
+          <Wipe panels={wipeColumns} className="scene-wipe paper-entry-wipe" />
           <div className="paper-wipe" aria-hidden="true" />
         </div>
       </section>

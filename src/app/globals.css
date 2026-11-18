@@ -240,7 +240,25 @@ img { display: block; }
 .about-panel .artwork { width: 84%; height: 100%; mix-blend-mode: multiply; }
 .about-panel img { object-fit: contain; }
 
+#smartpaper { position: relative; }
 .paper-story, .finish-frame { position: relative; isolation: isolate; height: var(--scene-height); min-height: 560px; overflow: hidden; background: #181818; }
+.paper-entry-wipe { display: none; }
+@media (min-width: 992px) and (prefers-reduced-motion: no-preference) {
+  #smartpaper > .section-title { position: absolute; inset: 0; z-index: 1; height: 100%; pointer-events: none; }
+  #smartpaper > .section-title h2 { font-size: clamp(80px, 10.3vw, 172px); line-height: .84; }
+  .paper-slide:first-child .paper-title { top: clamp(22px, 4.95svh, 65px); line-height: 1.05; letter-spacing: -.046em; }
+  .paper-entry-wipe { display: flex; }
+  .paper-entry-wipe i { position: relative; transform: none; }
+  .paper-entry-wipe i:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 1px;
+    background: #c7c7c7;
+    transform: scaleY(var(--paper-divider, 0));
+    transform-origin: top;
+  }
+}
 .chapter-slide { position: absolute; inset: 0; isolation: isolate; color: white; background: #171717; }
 .chapter-slide:not(:first-child) { visibility: hidden; }
 .chapter-slide .artwork { position: absolute; inset: 0; z-index: -1; }

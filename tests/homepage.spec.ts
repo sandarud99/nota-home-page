@@ -71,8 +71,8 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
       await scrollInScene(specs, .2);
       await expectPinned(specs);
 
-      const paper = page.locator('.paper-story');
-      const paperBounds = await scrollInScene(paper, .07);
+      const paper = page.locator(width < 992 ? '.paper-story' : '#smartpaper');
+      const paperBounds = await scrollInScene(paper, width < 992 ? .07 : .31);
       await expectPinned(paper);
       const paperControls = page.getByRole('group', { name: 'Smartpaper chapter' });
       await expect(paperControls.locator('[aria-current]')).toHaveAccessibleName('For the pen, it’s a precise map');
@@ -83,7 +83,7 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
       await expectPinned(paper);
       await paperControls.getByRole('button', { name: 'Previous Smartpaper chapter' }).click();
       await expect(paperControls.locator('[aria-current]')).toHaveAccessibleName('For the pen, it’s a precise map');
-      await expect.poll(() => readScroll(page)).toBeLessThan(paperBounds.start + (paperBounds.end - paperBounds.start) * .15);
+      await expect.poll(() => readScroll(page)).toBeLessThan(first + (paperBounds.end - paperBounds.start) * .08);
 
       const finishes = page.locator('.finish-frame');
       await scrollInScene(finishes, .18);
@@ -407,12 +407,84 @@ test('audience profiles slide in order and the pen zoom gives way to Smartpaper'
   await expect(panel).toBeInViewport();
 });
 
+test('the pinned Smartpaper heading fades into dividers and a stepped notebook reveal', async ({ page }) => {
+  const height = 805;
+  await page.setViewportSize({ width: 1470, height });
+  await page.goto('/');
+  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+  const stage = page.locator('#smartpaper');
+  const title = stage.locator('.section-title');
+  const notebook = stage.locator('.paper-slide').first();
+  const panels = stage.locator('.paper-entry-wipe i');
+  const dividers = () => panels.evaluateAll(nodes => nodes.slice(0, -1).map(node =>
+    Number(getComputedStyle(node).getPropertyValue('--paper-divider'))));
+  const panelTops = () => panels.evaluateAll(nodes => nodes.map(node => Math.round(node.getBoundingClientRect().top)));
+  const opacity = (locator: Locator) => locator.evaluate(node => Number(getComputedStyle(node).opacity));
+  const { start } = await scrollInScene(stage, 0);
+  const seek = (offset: number) => page.evaluate(top => scrollTo({ top, behavior: 'instant' }), start + offset * height);
+
+  await expect(panels).toHaveCount(6);
+  await expectPinned(stage);
+  await expect(title).toHaveCSS('opacity', '1');
+  const titleY = (await title.boundingBox())!.y;
+
+  await seek(.09);
+  await expect.poll(() => opacity(title)).toBeLessThan(.8);
+  const fadedTitle = await opacity(title);
+  expect(fadedTitle).toBeGreaterThan(.2);
+  expect((await title.boundingBox())!.y).toBeCloseTo(titleY, 0);
+
+  await seek(.334);
+  await expect(title).toHaveCSS('opacity', '0');
+  await expect.poll(async () => (await dividers())[4]).toBeGreaterThan(.45);
+  const rules = await dividers();
+  expect(rules[0]).toBe(0);
+  expect(rules[3]).toBeGreaterThan(.08);
+  expect(rules[3]).toBeLessThan(rules[4]);
+  await expect(notebook).toHaveCSS('opacity', '0');
+
+  await seek(.67);
+  await expect.poll(dividers).toEqual([1, 1, 1, 1, 1]);
+  expect(await panelTops()).toEqual([0, 0, 0, 0, 0, 0]);
+
+  await seek(.955);
+  await expect.poll(() => opacity(notebook)).toBeGreaterThan(.5);
+  const reveal = await panelTops();
+  const notebookFade = await opacity(notebook);
+  expect(notebookFade).toBeLessThan(.85);
+  expect(reveal[0]).toBeGreaterThan(reveal[1]);
+  expect(reveal[1]).toBeGreaterThan(reveal[2]);
+  expect(reveal[2]).toBeGreaterThan(reveal[3]);
+  expect(reveal[3]).toBeGreaterThan(reveal[4]);
+  expect(reveal[4]).toBeGreaterThan(reveal[5]);
+
+  await seek(1.08);
+  await expect.poll(() => opacity(notebook)).toBeGreaterThan(notebookFade + .1);
+  expect((await panelTops())[5]).toBeGreaterThan(300);
+  await seek(1.32);
+  await expectPinned(stage);
+  await expect(notebook).toHaveCSS('opacity', '1');
+  await expect.poll(panelTops).toEqual(Array(6).fill(height));
+  await expect(stage.getByRole('group', { name: 'Smartpaper chapter' })).toBeVisible();
+
+  await seek(.955);
+  await expect.poll(panelTops).toEqual(reveal);
+  await expect.poll(() => opacity(notebook)).toBeCloseTo(notebookFade, 3);
+  await seek(.09);
+  await expect.poll(() => opacity(title)).toBeCloseTo(fadedTitle, 3);
+
+  await page.goto('about:blank');
+  await page.goto('/#smartpaper');
+  await expect(stage).toBeInViewport();
+  await expect(title).toHaveCSS('opacity', '1');
+});
+
 test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await expect(page.locator('.pin-spacer')).toHaveCount(5);
-  const paper = page.locator('.paper-story');
-  await scrollInScene(paper, .14);
+  const paper = page.locator('#smartpaper');
+  await scrollInScene(paper, .32);
   await expectPinned(paper);
   const controls = page.getByRole('group', { name: 'Smartpaper chapter' });
   await expect(controls.locator('[aria-current]')).toHaveAccessibleName('For the pen, it’s a precise map');
