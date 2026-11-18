@@ -222,17 +222,17 @@ test('Specifications cards rise from below in order and align when settled', asy
   const peek = await positions();
   expect(peek.map(card => card.top)).toEqual([peek[0].top, peek[0].top, peek[0].top]);
 
-  await scrollInScene(stage, .41);
+  await scrollInScene(stage, .39);
   await expect.poll(async () => (await positions())[0].top).toBeLessThan(peek[0].top - 20);
   const left = await positions();
   expect(left.slice(1)).toEqual(peek.slice(1));
   await expect(cards.first()).toHaveCSS('opacity', '1');
 
-  await scrollInScene(stage, .48);
+  await scrollInScene(stage, .47);
   await expect.poll(async () => (await positions())[1].top).toBeLessThan(peek[1].top - 15);
   expect((await positions())[2]).toEqual(peek[2]);
 
-  await scrollInScene(stage, .58);
+  await scrollInScene(stage, .56);
   await expect.poll(async () => (await positions())[2].top).toBeLessThan(peek[2].top - 20);
   const rising = await positions();
   expect(rising[0].top).toBeLessThan(rising[1].top);
@@ -255,10 +255,87 @@ test('Specifications cards rise from below in order and align when settled', asy
   await writing.press('Enter');
   await expect(writing).toHaveAttribute('aria-current', 'step');
 
-  await scrollInScene(stage, .58);
+  await scrollInScene(stage, .56);
   await expect.poll(positions).toEqual(rising);
   await scrollInScene(stage, .26);
   await expect.poll(positions).toEqual(peek);
+});
+
+test('the center-out split hands off to the pinned manifesto and audience fades', async ({ page }) => {
+  const width = 1470;
+  await page.setViewportSize({ width, height: 805 });
+  await page.goto('/');
+  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+  const specs = page.locator('.spec-scene');
+  const bands = specs.locator('.spec-exit-wipe i');
+  const thought = page.locator('.thought-intro');
+  const manifesto = thought.locator('.manifesto');
+  const audience = thought.locator('.audience-intro');
+  const letters = manifesto.locator('.manifesto-letter');
+  const widths = () => bands.evaluateAll(rows => rows.map(row => Math.round(row.getBoundingClientRect().width)));
+  const letterOpacity = (index: number) => letters.nth(index).evaluate(letter => Number(getComputedStyle(letter).opacity));
+  const leadOpacity = () => audience.evaluate(section => Number(getComputedStyle(section).opacity));
+
+  await expect(bands).toHaveCount(4);
+  await scrollInScene(specs, .83);
+  await expectPinned(specs);
+  await expect.poll(async () => (await widths())[0]).toBeGreaterThan(20);
+  const early = await widths();
+  expect(early[3]).toBeLessThan(width - 200);
+  expect(early[0]).toBeLessThan(early[1]);
+  expect(early[1]).toBeLessThan(early[2]);
+  expect(early[2]).toBeLessThan(early[3]);
+  expect(await bands.evaluateAll(rows => rows.every(row => {
+    const { left, right } = row.getBoundingClientRect();
+    return Math.abs((left + right) / 2 - innerWidth / 2) < 1;
+  }))).toBe(true);
+
+  await scrollInScene(specs, .94);
+  await expect.poll(async () => (await widths())[0]).toBeGreaterThan(early[0] + 300);
+
+  await scrollInScene(thought, .02);
+  await expectPinned(thought);
+  await expect.poll(widths).toEqual([width, width, width, width]);
+  await expect(thought).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  await expect(manifesto).toHaveCSS('opacity', '0');
+  await expect(audience).toHaveCSS('opacity', '0');
+  expect(await thought.evaluate(stage => stage.contains(document.elementFromPoint(10, 10)))).toBe(true);
+
+  await scrollInScene(thought, .12);
+  await expect.poll(() => manifesto.evaluate(node => Number(getComputedStyle(node).opacity))).toBeGreaterThan(.02);
+  expect(await letterOpacity(0)).toBe(.28);
+  await expect(audience).toHaveCSS('opacity', '0');
+
+  await scrollInScene(thought, .24);
+  await expect.poll(() => letterOpacity(0)).toBeGreaterThan(.28);
+  expect(await letterOpacity(0)).toBeGreaterThan(await letterOpacity(3));
+  expect(await letterOpacity(-1)).toBe(.28);
+
+  await scrollInScene(thought, .49);
+  await expectPinned(thought);
+  await expect.poll(leadOpacity).toBeGreaterThan(.1);
+  const partialLead = await leadOpacity();
+  expect(partialLead).toBeLessThan(.9);
+  await expect(manifesto).toHaveCSS('opacity', '1');
+
+  await scrollInScene(thought, .76);
+  await expect(audience).toHaveCSS('opacity', '1');
+  await expect(letters.last()).toHaveCSS('opacity', '1');
+
+  await scrollInScene(thought, .49);
+  await expect.poll(leadOpacity).toBeCloseTo(partialLead, 3);
+  await scrollInScene(specs, .83);
+  await expect.poll(widths).toEqual(early);
+
+  await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+  await page.locator('.site-header a[href="#who-its-for"]').click();
+  await expect(page).toHaveURL(/#who-its-for$/);
+  await expect(audience).toBeInViewport();
+  await expect(audience).toHaveCSS('opacity', '1');
+  await page.goto('about:blank');
+  await page.goto('/#who-its-for');
+  await expect(audience).toBeInViewport();
+  await expect(audience).toHaveCSS('opacity', '1');
 });
 
 test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page }) => {

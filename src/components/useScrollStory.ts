@@ -21,6 +21,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
     const select = (selector: string) => page.querySelector<HTMLElement>(selector)!;
     const progress = select('.page-progress');
     const specSection = select('#specifications');
+    const audience = select('#who-its-for');
     const updateProgress = () => {
       const scroller = document.scrollingElement!;
       const distance = scroller.scrollHeight - scroller.clientHeight;
@@ -33,17 +34,16 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
     const media = gsap.matchMedia(page);
     let refreshFrame = 0;
     let disposed = false;
-    let pendingSpecLink = location.hash === '#specifications';
+    let pendingAnchor = [specSection, audience].find(section => location.hash === `#${section.id}`);
+    let pendingAnchorTop: number | undefined;
     const refresh = () => {
       cancelAnimationFrame(refreshFrame);
       refreshFrame = requestAnimationFrame(() => {
         ScrollTrigger.refresh();
-        if (pendingSpecLink) {
-          pendingSpecLink = false;
-          const margin = parseFloat(getComputedStyle(specSection).scrollMarginTop);
-          if (specSection.getBoundingClientRect().top > margin) {
-            specSection.scrollIntoView({ behavior: 'instant' });
-          }
+        if (pendingAnchor) {
+          const top = pendingAnchorTop ?? pendingAnchor.getBoundingClientRect().top + window.scrollY;
+          pendingAnchor = undefined;
+          if (top > window.scrollY) window.scrollTo({ top, behavior: 'instant' });
         }
         updateProgress();
       });
@@ -77,6 +77,15 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
           onRefresh,
         },
       });
+
+      // Navigate to the readable frame of a pinned section.
+      const positionAnchor = (anchor: HTMLElement, trigger: ScrollTrigger, time: number, inset = 0) => {
+        const duration = trigger.animation?.duration();
+        if (!duration) return;
+        const distance = Math.ceil((trigger.end - trigger.start) * time / duration);
+        anchor.style.scrollMarginTop = `${inset - distance}px`;
+        if (anchor === pendingAnchor) pendingAnchorTop = trigger.start + distance;
+      };
 
       // Keep the controls and screen-reader state tied to the same timeline as the artwork.
       const track = (name: Scene, timeline: gsap.core.Timeline, count: number, first: number, last: number) => {
@@ -146,22 +155,16 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       const specs = select('.spec-scene');
       const groups = Array.from(specs.querySelectorAll<HTMLElement>('.spec-card'));
       const revealEnd = .18;
-      const specTravel = mobile ? .50 * Math.max(1, groups.length - 1) : 2.83;
-      const specMotion = pin(specs, specTravel, mobile ? undefined : trigger => {
-        const duration = trigger.animation?.duration();
-        if (duration) {
-          // Land past the fade when navigating directly to Specifications.
-          const offset = Math.ceil((trigger.end - trigger.start) * revealEnd / duration);
-          specSection.style.scrollMarginTop = `-${offset}px`;
-        }
-      });
+      const specTravel = mobile ? .50 * Math.max(1, groups.length - 1) : 3.02;
+      if (!mobile) gsap.set(specSection, { '--spec-overlap': 'calc(0px - var(--spec-height))' });
+      const specMotion = pin(specs, specTravel, mobile ? undefined : trigger => positionAnchor(specSection, trigger, revealEnd));
       const specPen = select('.spec-pen');
       const cardRise = { start: 1.26, stagger: .38, settle: 2.70 };
       const firstSpec = mobile ? .16 : (cardRise.start + cardRise.settle) / 2;
       const lastSpec = mobile
         ? Math.max(firstSpec, groups.length - 1) + .05
         : cardRise.settle;
-      const specExit = lastSpec + (mobile ? .17 : .42);
+      const specExit = lastSpec + (mobile ? .17 : .39);
       if (mobile) {
         specMotion.fromTo(specPen, { yPercent: 16 }, { yPercent: 0, duration: .65 }, 0);
         groups.forEach((group, index) => {
@@ -176,6 +179,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
         const belowStage = (card: HTMLElement) => specs.clientHeight - cards.offsetTop - card.offsetTop + 1;
         const titleDelay = .025;
         specMotion
+          .set(specSection, { zIndex: 1 }, .02)
           .fromTo(select('.spec-intro-lines'), { opacity: 1 }, {
             opacity: 0, duration: .115, ease: 'power2.out',
           }, 0)
@@ -197,15 +201,40 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
         if (controls) specMotion.fromTo(controls, { autoAlpha: 0 }, { autoAlpha: 1, duration: .24 }, firstSpec - .24);
       }
       specMotion.to({}, { duration: .28 }, specExit);
-      if (!mobile) specMotion.fromTo(specs.querySelectorAll('.scene-wipe i'), { scaleY: 0 }, { scaleY: 1, stagger: { each: .072, from: 'center' }, duration: .31 }, specExit);
+      if (!mobile) {
+        const bands = specs.querySelectorAll('.spec-exit-wipe i');
+        const timings = [
+          { delay: .14, duration: .88 },
+          { delay: .09, duration: .84 },
+          { delay: .05, duration: .71 },
+          { delay: 0, duration: .61 },
+        ];
+        bands.forEach((band, index) => {
+          const { delay, duration } = timings[index];
+          specMotion.fromTo(band, { scaleX: 0 }, { scaleX: 1, duration, ease: 'power1.inOut' }, specExit + delay);
+        });
+        specMotion.set(specSection, { zIndex: 0 }, specMotion.duration());
+      }
       track('specifications', specMotion, groups.length, firstSpec / specMotion.duration(), lastSpec / specMotion.duration());
 
       const manifesto = select('.manifesto');
-      pin(manifesto, mobile ? .19 : .87).fromTo(
-        manifesto.querySelectorAll('.manifesto-word'),
-        { opacity: .28 },
-        { opacity: 1, stagger: .018, duration: .1 },
-      );
+      const letters = manifesto.querySelectorAll('.manifesto-letter');
+      const brighten = { opacity: 1, stagger: { amount: .52 }, duration: .027, ease: 'power1.inOut' };
+      if (mobile) {
+        pin(manifesto, .19).fromTo(letters, { opacity: .28 }, brighten);
+        gsap.fromTo(audience, { opacity: 0 }, {
+          opacity: 1, ease: 'power1.inOut',
+          scrollTrigger: { trigger: audience, start: 'top 88%', end: 'top 58%', scrub: true },
+        });
+      } else {
+        const thought = select('.thought-intro');
+        const travel = 1.15;
+        pin(thought, travel, trigger => positionAnchor(audience, trigger, .83, audience.offsetTop))
+          .to({}, { duration: travel }, 0)
+          .fromTo(manifesto, { opacity: 0 }, { opacity: 1, duration: .25, ease: 'power1.in' }, .043)
+          .fromTo(letters, { opacity: .28 }, brighten, .268)
+          .fromTo(audience, { opacity: 0 }, { opacity: 1, duration: .45, ease: 'power1.inOut' }, .30);
+      }
 
       const about = select('.about-visual');
       if (!mobile) {
@@ -249,6 +278,8 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
 
       return () => {
         specSection.style.removeProperty('scroll-margin-top');
+        audience.style.removeProperty('scroll-margin-top');
+        pendingAnchorTop = undefined;
         chapters.current = {};
         lenis.current = null;
         gsap.ticker.remove(tick);
@@ -257,13 +288,14 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       };
     });
 
-    page.addEventListener('load', refresh, true);
+    const layout = new ResizeObserver(refresh);
+    layout.observe(page);
     document.fonts.ready.then(() => { if (!disposed) refresh(); });
     refresh();
     return () => {
       disposed = true;
       cancelAnimationFrame(refreshFrame);
-      page.removeEventListener('load', refresh, true);
+      layout.disconnect();
       window.removeEventListener('scroll', updateProgress);
       ScrollTrigger.removeEventListener('refresh', updateProgress);
       media.revert();

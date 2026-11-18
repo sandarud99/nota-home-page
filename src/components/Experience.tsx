@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
 import { ArrowLeft, ArrowRight, Grip, X } from 'lucide-react';
 import { mediaUrl, safeHref } from '@/lib/strapi';
 import type { Artwork, FormCopy, Heading, Homepage, SectionItem } from '@/lib/strapi';
@@ -47,10 +47,28 @@ function SectionTitle({ id, heading }: { id: string; heading: Heading }) {
 
 const heroWipeColumns = 6;
 
-function Wipe({ columns = 7, className = 'scene-wipe' }: { columns?: number; className?: string }) {
+function Wipe({ panels = 7, className = 'scene-wipe' }: { panels?: number; className?: string }) {
   return <div className={className} aria-hidden="true">
-    {Array.from({ length: columns }, (_, i) => <i key={i} />)}
+    {Array.from({ length: panels }, (_, i) => <i key={i} />)}
   </div>;
+}
+
+const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+
+function Manifesto({ text }: { text: string }) {
+  return <section className="manifesto" aria-label="Our philosophy">
+    <p className="manifesto-words">
+      <span className="sr-only">{text}</span>
+      <span aria-hidden="true">
+        {text.trim().split(/\s+/).map((word, index) => <Fragment key={index}>
+          {index > 0 && ' '}
+          <span className="manifesto-word">
+            {Array.from(graphemes.segment(word), ({ segment }, i) => <span className="manifesto-letter" key={i}>{segment}</span>)}
+          </span>
+        </Fragment>)}
+      </span>
+    </p>
+  </section>;
 }
 
 function SceneControls({ index, titles, label, select }: {
@@ -247,13 +265,13 @@ export default function Experience({ data: d }: { data: Homepage }) {
             </button>
           </header>
           <h1 id="hero-heading" className="hero-title">{d.hero.title}</h1>
-          <Wipe columns={heroWipeColumns} />
+          <Wipe panels={heroWipeColumns} />
         </section>
       </div>
 
       <section id="specifications" aria-labelledby="specs-heading">
         <div className="spec-scene">
-          <Wipe columns={heroWipeColumns} className="spec-intro-lines" />
+          <Wipe panels={heroWipeColumns} className="spec-intro-lines" />
           <SectionTitle id="specs-heading" heading={d.specsHeading} />
           <ImageView artwork={d.specsArtwork} className="spec-pen" fallback="/art/pen-transparent.svg" />
           <div className="spec-cards">
@@ -267,26 +285,28 @@ export default function Experience({ data: d }: { data: Homepage }) {
           </div>
           <SceneControls index={active.specifications} titles={d.specifications.map(item => item.title)} label="specification"
             select={index => goToScene('specifications', index)} />
-          <Wipe />
+          <Wipe panels={4} className="spec-exit-wipe" />
         </div>
       </section>
 
       <div className="thought-section">
-        <section className="manifesto" aria-label="Our philosophy">
-          <p className="manifesto-words">{d.manifesto.trim().split(/\s+/).map((word, i) => <span className="manifesto-word" key={i}>{word}{' '}</span>)}</p>
-        </section>
-        <section id="who-its-for" className="audience" aria-labelledby="audience-heading">
-          <div>
-            <h2 id="audience-heading">{d.audienceHeading.title}</h2>
-            {d.audienceHeading.description && <p className="audience-description">{d.audienceHeading.description}</p>}
-          </div>
-          <div className="audience-copy">
+        <div className="thought-intro">
+          <Manifesto text={d.manifesto} />
+          <section id="who-its-for" className="audience audience-intro" aria-labelledby="audience-heading">
+            <div>
+              <h2 id="audience-heading">{d.audienceHeading.title}</h2>
+              {d.audienceHeading.description && <p className="audience-description">{d.audienceHeading.description}</p>}
+            </div>
             <p className="audience-lead">{d.audienceIntro}</p>
+          </section>
+        </div>
+        <div className="audience audience-list">
+          <div className="audience-copy">
             {d.audiences.map((item, i) => <article key={item.id ?? i}>
               <h3>{item.title}</h3><p>{item.description}</p>
             </article>)}
           </div>
-        </section>
+        </div>
         <section id="about" className="about-visual" aria-label={d.aboutArtwork.alt}>
           <div className="about-panel"><ImageView artwork={d.aboutArtwork} fallback="/art/pen-transparent.svg" /></div>
         </section>
