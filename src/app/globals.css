@@ -213,11 +213,13 @@ img { display: block; }
 .setup-screen code { overflow-wrap: anywhere; }
 
 @media (max-width: 1200px) and (min-width: 992px) {
-  .site-header { gap: 24px; grid-template-columns: auto 1fr auto; }
-  .menu-panel nav { gap: 18px; }
-  .header-order { padding: 11px; }
-  .brand-mark { width: 30px; }
-  .order-button { padding: 0 14px; }
+  .site-header { gap: clamp(26px, 3.6vw, 43px); grid-template-columns: auto 1fr 34.3vw; padding: 15px 2.1vw; }
+  .menu-panel nav { gap: clamp(18px, 2.9vw, 34px); }
+  .menu-panel nav a { font-size: 16px; }
+  .header-order { padding: 10px; }
+  .order-button { min-height: 44px; padding: 0 14px; }
+  .hero-pen { left: 16.2%; width: 96vw; }
+  .hero-title { left: 2.1vw; bottom: 2vh; font-size: clamp(92px, 9.6vw, 116px); }
 }
 
 @media (width < 992px) {

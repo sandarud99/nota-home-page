@@ -1,0 +1,17 @@
+.git
+**/.DS_Store
+**/node_modules
+**/.next
+**/.env
+**/.env.*
+**/*.tsbuildinfo
+evidence
+preview
+test-results
+playwright-report
+cms/.strapi
+cms/.cache
+cms/.tmp
+cms/dist
+cms/public/uploads/*
+!cms/public/uploads/.gitkeep
