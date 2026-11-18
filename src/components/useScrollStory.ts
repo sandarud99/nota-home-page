@@ -41,8 +41,8 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
     };
 
     media.add({
-      desktop: '(min-width: 768px)',
-      mobile: '(max-width: 767px)',
+      desktop: '(min-width: 992px)',
+      mobile: '(width < 992px)',
       reduced: '(prefers-reduced-motion: reduce)',
     }, ({ conditions }) => {
       if (conditions?.reduced) {

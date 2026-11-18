@@ -64,7 +64,7 @@ img { display: block; }
 .header-order { display: flex; justify-content: space-between; align-items: center; gap: 14px; background: #fff; color: black; border-radius: 4px; padding: 20px; }
 .brand-mark { flex: 0 0 auto; width: 38px; aspect-ratio: 38 / 40; }
 .brand-mark img { object-fit: contain; }
-.order-button { border: 0; border-radius: 4px; background: black; color: white; padding: 0 20px; min-height: 52px; font-weight: 650; letter-spacing: -.03em; }
+.order-button { border: 0; border-radius: 4px; background: black; color: white; padding: 0 20px; min-height: 52px; font-weight: 650; letter-spacing: -.03em; white-space: nowrap; }
 .order-button span { color: #aaa; }
 .order-button i { font-style: normal; margin: 0 .57em; }
 .order-button:hover, .inquiry-submit:hover { background: #29292d; }
@@ -212,7 +212,7 @@ img { display: block; }
 .setup-screen h1 { font: 400 clamp(45px, 7vw, 115px)/.95 var(--serif); }
 .setup-screen code { overflow-wrap: anywhere; }
 
-@media (max-width: 1023px) and (min-width: 768px) {
+@media (max-width: 1200px) and (min-width: 992px) {
   .site-header { gap: 24px; grid-template-columns: auto 1fr auto; }
   .menu-panel nav { gap: 18px; }
   .header-order { padding: 11px; }
@@ -220,7 +220,7 @@ img { display: block; }
   .order-button { padding: 0 14px; }
 }
 
-@media (max-width: 767px) {
+@media (width < 992px) {
   :root { --gutter: 12px; }
   .hero { min-height: 480px; background: radial-gradient(ellipse 104% 104% at 50% 8%, #9aa2a9, #656a71 47%, #373a40 100%); }
   .hero-pen { top: 0; left: 50%; width: min(37vw, 28svh, 245px); translate: -50% 0; }
@@ -290,7 +290,17 @@ img { display: block; }
   .footer-credits span:last-child { grid-column: 2; }
 }
 
-@media (max-height: 690px) and (max-width: 767px) {
+@media (min-width: 600px) and (width < 992px) {
+  :root { --gutter: clamp(16px, 2.1vw, 24px); }
+  .hero-pen { width: min(24vw, 22svh, 225px); }
+  .hero-title { font-size: clamp(78px, 12.75vw, 124px); bottom: 5.3svh; }
+  .site-header { min-height: 57px; padding-block: 6px; }
+  .site-header .brand { font-size: 24px; }
+  .mobile-toggle svg { width: 22px; height: 22px; }
+  .mobile-order .brand-mark { width: 25px; }
+}
+
+@media (max-height: 690px) and (width < 992px) {
   .spec-cards { top: 47%; }
   .spec-pen { top: 24%; }
   .spec-scene .section-title h2 { font-size: clamp(59px, 15vw, 84px); }

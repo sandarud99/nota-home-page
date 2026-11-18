@@ -18,7 +18,7 @@ function ImageView({ artwork, className = '', eager = false, fallback }: {
   const image = source && !failed.includes(source) ? source : fallback;
   const mobileSource = mobile && !failed.includes(mobile) ? mobile : undefined;
   return <picture className={`artwork ${className}`}>
-    {mobileSource && <source media="(max-width: 767px)" srcSet={mobileSource}
+    {mobileSource && <source media="(width < 992px)" srcSet={mobileSource}
       width={artwork.mobileImage?.width ?? artwork.mobileImageWidth}
       height={artwork.mobileImage?.height ?? artwork.mobileImageHeight} />}
     <img
@@ -170,7 +170,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
   const orderLabel = `${d.hero.ctaLabel} ${d.hero.priceLabel} • ${d.hero.price}`;
 
   useEffect(() => {
-    const desktop = window.matchMedia('(min-width: 768px)');
+    const desktop = window.matchMedia('(min-width: 992px)');
     const closeAtDesktop = () => { if (desktop.matches) setMenuOpen(false); };
     desktop.addEventListener('change', closeAtDesktop);
     return () => desktop.removeEventListener('change', closeAtDesktop);

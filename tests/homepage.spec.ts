@@ -33,6 +33,8 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
       expect(response?.status()).toBe(200);
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Smart pen\s+for real thinking/);
       await expect(page.locator('.pin-spacer')).toHaveCount(5);
+      if (width < 992) await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible();
+      else await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
       const images = await page.locator('.artwork img').evaluateAll(async images => {
         await Promise.all(images.map(async image => {
           const img = image as HTMLImageElement;
