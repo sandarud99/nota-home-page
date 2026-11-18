@@ -19,6 +19,8 @@ npm --prefix cms run dev
 
 In a second terminal, run `npm run dev`. Open [the homepage](http://127.0.0.1:3000/) and [the Strapi admin](http://127.0.0.1:1337/admin). Create your own first administrator on the welcome screen. `npm run env:local` generates matching proxy credentials and Strapi secrets in ignored local files and preserves existing settings. It reads [the frontend template](.env.example) and [the CMS template](cms/.env.example).
 
+If port 5432 is already in use, publish the Docker database on 5433 by using `-p 127.0.0.1:5433:5432`, then run `DATABASE_URL=postgresql://nota@127.0.0.1:5433/nota npm run env:local`. To resume a stopped project database, run `docker start nota-postgres`.
+
 Strapi seeds an empty database with one published Homepage and 32 real Media Library uploads on the first start. The seed reuses named uploads on retry and preserves any existing homepage draft or publication. Set `SEED_HOMEPAGE=false` after the initial publish if you want an empty database to require manual initialization. The shared seed inputs live in `src/content/homepage.ts` and `public/images`.
 
 For independent frontend development, run `CONTENT_SOURCE=local npm run dev`. CMS mode reads only published Strapi content. If the CMS is unavailable, the page shows a service error and the readiness endpoint returns 503.
@@ -43,9 +45,9 @@ Content Manager exposes one **Homepage** single type with Draft & Publish and an
 | Footer, inquiry copy and SEO | Footer links and credits, form labels and feedback, page metadata and social image |
 | Inquiry | Name, email, message and Strapi-managed creation date |
 
-Upload replacement artwork using the Media Library. Artwork has a main image, optional mobile image and editable alt text. Publish Homepage changes to make them available. Next.js requests `GET /api/public-homepage` with its cache bypassed. Strapi explicitly populates the nested components and images and returns the published document.
+Use **Content Manager → Homepage → Draft** to edit the labelled sections. Upload replacement artwork using the Media Library. Artwork has a main image, optional mobile image and editable alt text. Save the draft, then select **Publish** when it is ready to appear on the homepage. Next.js requests `GET /api/public-homepage` with its cache bypassed. Strapi explicitly populates the nested components and images and returns the published document.
 
-Visitors send JSON to `POST /api/inquiry` on Next.js. Both servers validate the fields and honeypot. The proxy caps the request at 24 KiB, authenticates to Strapi with a dedicated shared secret, and returns success after the database write. Strapi allows five valid attempts per IP or email within a minute, with an additional application-wide cap. The Inquiry collection has no public read route.
+Visitors send JSON to `POST /api/inquiry` on Next.js. Both loopback addresses, `localhost` and `127.0.0.1`, work on the configured local frontend port. Both servers validate the fields and honeypot. The proxy caps the request at 24 KiB, authenticates to Strapi with a dedicated shared secret, and returns success after the database write. Strapi allows five valid attempts per IP or email within a minute, with an additional application-wide cap. Open **Content Manager → Inquiry** to see submissions with the newest ones first.
 
 ## Verification
 
@@ -58,7 +60,13 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The Playwright suite covers 320×640, 390×844, 768×1024, 1024×768, 1440×900 and 1920×1080. It checks image decoding, overflow, scroll pins, scene controls, reversing via wheel and touch, keyboard focus, and reduced motion. With an existing production build running, use `TEST_BASE_URL=http://127.0.0.1:3000 npm run test:e2e`. Setting `PLAYWRIGHT_CHANNEL=chrome` uses installed Google Chrome.
+The Playwright suite covers 320×640, 390×844, 768×1024, 1024×768, 1440×900 and 1920×1080. It checks image decoding, overflow, scroll pins, every scene selector, reversing via wheel and touch, keyboard focus, and reduced motion. With an existing production build running, use `TEST_BASE_URL=http://127.0.0.1:3000 npm run test:e2e`. Setting `PLAYWRIGHT_CHANNEL=chrome` uses installed Google Chrome.
+
+The CMS workflow test exercises editor labels, draft isolation, a real media upload, publication of copy and metadata, and a persisted inquiry from `localhost`. Use a disposable PostgreSQL database for it. Start Strapi with that database’s `DATABASE_URL` and a temporary `STRAPI_PUBLIC_DIR` containing an empty `uploads/` directory. Point the running frontend at that Strapi instance. Set `TEST_CMS_ADMIN_PASSWORD` to a strong password for the synthetic test account, then run the command below. The test restores the original homepage after publishing the test edit.
+
+```sh
+TEST_BASE_URL=http://127.0.0.1:3000 TEST_CMS_URL=http://127.0.0.1:1337 npm run test:e2e -- tests/cms.spec.ts
+```
 
 Both application images were built and run locally with PostgreSQL on a private container network. The browser suite passed against this stack. All 32 original upload checksums and five synthetic inquiry rows held after replacing the CMS container with the same volumes and seeding disabled.
 

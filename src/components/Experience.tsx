@@ -254,7 +254,10 @@ export default function Experience({ data: d }: { data: Homepage }) {
           <p className="manifesto-words">{d.manifesto.trim().split(/\s+/).map((word, i) => <span className="manifesto-word" key={i}>{word}{' '}</span>)}</p>
         </section>
         <section id="who-its-for" className="audience" aria-labelledby="audience-heading">
-          <h2 id="audience-heading">{d.audienceHeading.title}</h2>
+          <div>
+            <h2 id="audience-heading">{d.audienceHeading.title}</h2>
+            {d.audienceHeading.description && <p className="audience-description">{d.audienceHeading.description}</p>}
+          </div>
           <div className="audience-copy">
             <p className="audience-lead">{d.audienceIntro}</p>
             {d.audiences.map((item, i) => <article key={item.id ?? i}>
@@ -297,8 +300,10 @@ export default function Experience({ data: d }: { data: Homepage }) {
         </div>
       </section>
 
-      <section id="finishes" aria-labelledby="finishes-heading">
+      <section id="finishes" aria-labelledby="finishes-heading"
+        aria-describedby={d.colorsHeading.description ? 'finishes-description' : undefined}>
         <h2 className="sr-only" id="finishes-heading">{d.colorsHeading.title}</h2>
+        {d.colorsHeading.description && <p className="sr-only" id="finishes-description">{d.colorsHeading.description}</p>}
         <div className="finish-frame">
           {d.colors.map((color, i) => <article key={color.id ?? i}
             className={`chapter-slide finish-slide ${color.darkText ? 'dark-text' : ''}`}

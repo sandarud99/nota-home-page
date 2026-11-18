@@ -213,5 +213,181 @@
       "required": true,
       "repeatable": false
     }
+  },
+  "config": {
+    "metadatas": {
+      "brand": {
+        "edit": {
+          "label": "Brand name"
+        }
+      },
+      "headerWordmark": {
+        "edit": {
+          "label": "Header wordmark",
+          "description": "The short brand text in the site header."
+        }
+      },
+      "brandMark": {
+        "edit": {
+          "label": "Brand symbol",
+          "description": "Use a transparent image for the symbol beside the order button."
+        }
+      },
+      "navigation": {
+        "edit": {
+          "label": "Header navigation",
+          "description": "Choose a homepage section anchor or enter a full HTTPS URL."
+        }
+      },
+      "hero": {
+        "edit": {
+          "label": "Opening hero"
+        }
+      },
+      "menuArtwork": {
+        "edit": {
+          "label": "Mobile menu artwork"
+        }
+      },
+      "specsHeading": {
+        "edit": {
+          "label": "Specifications heading"
+        }
+      },
+      "specsArtwork": {
+        "edit": {
+          "label": "Specifications artwork"
+        }
+      },
+      "specifications": {
+        "edit": {
+          "label": "Specification groups",
+          "description": "Arrange the three groups in scroll order."
+        }
+      },
+      "manifesto": {
+        "edit": {
+          "label": "Manifesto text"
+        }
+      },
+      "audienceHeading": {
+        "edit": {
+          "label": "Audience heading"
+        }
+      },
+      "audienceIntro": {
+        "edit": {
+          "label": "Audience introduction"
+        }
+      },
+      "audiences": {
+        "edit": {
+          "label": "Audience profiles"
+        }
+      },
+      "aboutArtwork": {
+        "edit": {
+          "label": "Pen close-up"
+        }
+      },
+      "paperHeading": {
+        "edit": {
+          "label": "Smartpaper heading"
+        }
+      },
+      "paperDetails": {
+        "edit": {
+          "label": "Smartpaper chapters",
+          "description": "Drag the chapters to change their order in the scroll sequence."
+        }
+      },
+      "boxHeading": {
+        "edit": {
+          "label": "Inside the box heading"
+        }
+      },
+      "boxSet": {
+        "edit": {
+          "label": "Complete set"
+        }
+      },
+      "boxProductOverview": {
+        "edit": {
+          "label": "Product overview"
+        }
+      },
+      "boxItems": {
+        "edit": {
+          "label": "Box contents"
+        }
+      },
+      "boxCallouts": {
+        "edit": {
+          "label": "Product detail gallery"
+        }
+      },
+      "colorsHeading": {
+        "edit": {
+          "label": "Finishes heading",
+          "description": "This heading and description are read by assistive technology. Edit visible titles in each finish."
+        }
+      },
+      "colors": {
+        "edit": {
+          "label": "Pen finishes",
+          "description": "Arrange the finishes in scroll order, starting with the introductory finish."
+        }
+      },
+      "footerDescription": {
+        "edit": {
+          "label": "Footer description"
+        }
+      },
+      "footerNavigationLabel": {
+        "edit": {
+          "label": "Footer navigation heading"
+        }
+      },
+      "footerLinks": {
+        "edit": {
+          "label": "Footer links"
+        }
+      },
+      "footerYearLabel": {
+        "edit": {
+          "label": "Footer year heading"
+        }
+      },
+      "footerYear": {
+        "edit": {
+          "label": "Footer year"
+        }
+      },
+      "footerCopyright": {
+        "edit": {
+          "label": "Copyright notice"
+        }
+      },
+      "footerCredit": {
+        "edit": {
+          "label": "Design credit"
+        }
+      },
+      "footerProject": {
+        "edit": {
+          "label": "Project credit"
+        }
+      },
+      "formCopy": {
+        "edit": {
+          "label": "Inquiry form copy"
+        }
+      },
+      "seo": {
+        "edit": {
+          "label": "Search and social metadata"
+        }
+      }
+    }
   }
 }

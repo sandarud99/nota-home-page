@@ -107,6 +107,7 @@ img { display: block; }
 .manifesto-words { max-width: min(86%, 1480px); font: 400 clamp(38px, 4vw, 78px)/.98 var(--serif); letter-spacing: -.026em; }
 .audience { display: grid; grid-template-columns: 1fr minmax(360px, 49%); padding: 0 var(--gutter) clamp(112px, 26vh, 300px); gap: 20px; }
 .audience h2 { font-size: 13px; font-weight: 600; color: #aaa; letter-spacing: .02em; text-transform: uppercase; }
+.audience-description { max-width: 30ch; margin-top: 12px; color: #ddd; font-size: 15px; line-height: 1.4; }
 .audience-copy { display: grid; gap: clamp(22px, 3.3vh, 40px); }
 .audience-lead { font-size: clamp(20px, 2vw, 37px); font-weight: 520; line-height: 1.02; letter-spacing: -.04em; white-space: pre-line; padding-bottom: clamp(24px, 4vh, 64px); }
 .audience article { max-width: min(100%, 56rem); margin-left: 27%; font-size: clamp(14px, 1.16vw, 20px); line-height: 1.25; letter-spacing: -.018em; }

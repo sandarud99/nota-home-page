@@ -23,5 +23,24 @@
         "images"
       ]
     }
+  },
+  "config": {
+    "metadatas": {
+      "metaTitle": {
+        "edit": {
+          "label": "Page title"
+        }
+      },
+      "metaDescription": {
+        "edit": {
+          "label": "Page description"
+        }
+      },
+      "ogImage": {
+        "edit": {
+          "label": "Social preview image"
+        }
+      }
+    }
   }
 }

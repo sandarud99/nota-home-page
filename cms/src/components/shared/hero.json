@@ -46,5 +46,47 @@
         "images"
       ]
     }
+  },
+  "config": {
+    "metadatas": {
+      "title": {
+        "edit": {
+          "label": "Headline",
+          "description": "Use a line break to place the second line underneath the first."
+        }
+      },
+      "ctaLabel": {
+        "edit": {
+          "label": "Order button label"
+        }
+      },
+      "priceLabel": {
+        "edit": {
+          "label": "Product name"
+        }
+      },
+      "price": {
+        "edit": {
+          "label": "Displayed price"
+        }
+      },
+      "image": {
+        "edit": {
+          "label": "Desktop image"
+        }
+      },
+      "mobileImage": {
+        "edit": {
+          "label": "Mobile image",
+          "description": "Portrait and phone layouts use this asset below 992 pixels."
+        }
+      },
+      "alt": {
+        "edit": {
+          "label": "Alt text",
+          "description": "Use a short description of the image."
+        }
+      }
+    }
   }
 }

@@ -41,5 +41,41 @@
         "images"
       ]
     }
+  },
+  "config": {
+    "metadatas": {
+      "title": {
+        "edit": {
+          "label": "Chapter title"
+        }
+      },
+      "caption": {
+        "edit": {
+          "label": "Caption heading"
+        }
+      },
+      "description": {
+        "edit": {
+          "label": "Caption text"
+        }
+      },
+      "image": {
+        "edit": {
+          "label": "Desktop image"
+        }
+      },
+      "mobileImage": {
+        "edit": {
+          "label": "Mobile image",
+          "description": "Portrait and phone layouts use this asset below 992 pixels."
+        }
+      },
+      "alt": {
+        "edit": {
+          "label": "Alt text",
+          "description": "Use a short description of the image."
+        }
+      }
+    }
   }
 }

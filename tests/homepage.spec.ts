@@ -130,6 +130,35 @@ test('touch moves the document through a pinned finish and back', async ({ brows
   }
 });
 
+test('every pinned chapter selector brings its content into view', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+
+  const chapters = [
+    { stage: '.spec-scene', label: 'specification', count: 3 },
+    { stage: '.paper-story', label: 'Smartpaper chapter', count: 4 },
+    { stage: '.finish-frame', label: 'pen finish', count: 5 },
+  ];
+
+  for (const chapter of chapters) {
+    const stage = page.locator(chapter.stage);
+    await scrollInScene(stage, .14);
+    const controls = stage.getByRole('group', { name: chapter.label });
+    const selectors = controls.locator('.scene-steps button');
+    await expect(selectors).toHaveCount(chapter.count);
+
+    for (let index = chapter.count - 1; index >= 0; index--) {
+      const button = selectors.nth(index);
+      const label = await button.getAttribute('aria-label');
+      await button.click();
+      await expect(button).toHaveAttribute('aria-current', 'step');
+      await expectPinned(stage);
+      await expect(stage.getByRole('heading', { name: label!, exact: true })).toBeInViewport();
+    }
+  }
+});
+
 test('mobile navigation and the order dialog support keyboard focus', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
@@ -144,6 +173,7 @@ test('mobile navigation and the order dialog support keyboard focus', async ({ p
   await nav.getByRole('link', { name: 'Specifications' }).click();
   await expect(page).toHaveURL(/#specifications$/);
   await expect(nav).toBeHidden();
+  await expect(page.locator('.spec-scene')).toBeInViewport();
 
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   const order = page.getByRole('button', { name: /Order Nota One/ });

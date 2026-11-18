@@ -46,5 +46,48 @@
         "images"
       ]
     }
+  },
+  "config": {
+    "metadatas": {
+      "title": {
+        "edit": {
+          "label": "Finish title"
+        }
+      },
+      "description": {
+        "edit": {
+          "label": "Tagline"
+        }
+      },
+      "tone": {
+        "edit": {
+          "label": "Backdrop color",
+          "description": "Enter a six-digit hex color such as #303139."
+        }
+      },
+      "darkText": {
+        "edit": {
+          "label": "Dark caption text",
+          "description": "Enable for bright backgrounds such as Bright Orange."
+        }
+      },
+      "image": {
+        "edit": {
+          "label": "Desktop image"
+        }
+      },
+      "mobileImage": {
+        "edit": {
+          "label": "Mobile image",
+          "description": "Portrait and phone layouts use this asset below 992 pixels."
+        }
+      },
+      "alt": {
+        "edit": {
+          "label": "Alt text",
+          "description": "Use a short description of the image."
+        }
+      }
+    }
   }
 }

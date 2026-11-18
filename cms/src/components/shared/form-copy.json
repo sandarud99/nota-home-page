@@ -60,5 +60,64 @@
       "required": true,
       "maxLength": 300
     }
+  },
+  "config": {
+    "metadatas": {
+      "title": {
+        "edit": {
+          "label": "Dialog title"
+        }
+      },
+      "description": {
+        "edit": {
+          "label": "Dialog introduction"
+        }
+      },
+      "nameLabel": {
+        "edit": {
+          "label": "Name label"
+        }
+      },
+      "emailLabel": {
+        "edit": {
+          "label": "Email label"
+        }
+      },
+      "messageLabel": {
+        "edit": {
+          "label": "Message label"
+        }
+      },
+      "submitLabel": {
+        "edit": {
+          "label": "Submit button label"
+        }
+      },
+      "closeLabel": {
+        "edit": {
+          "label": "Close button label"
+        }
+      },
+      "sendingLabel": {
+        "edit": {
+          "label": "Submitting status"
+        }
+      },
+      "successMessage": {
+        "edit": {
+          "label": "Success message"
+        }
+      },
+      "errorMessage": {
+        "edit": {
+          "label": "Error message"
+        }
+      },
+      "retryMessage": {
+        "edit": {
+          "label": "Rate limit message"
+        }
+      }
+    }
   }
 }

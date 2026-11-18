@@ -28,5 +28,55 @@
       "maxLength": 3000,
       "minLength": 10
     }
+  },
+  "config": {
+    "settings": {
+      "bulkable": true,
+      "filterable": true,
+      "pageSize": 10,
+      "searchable": true,
+      "mainField": "name",
+      "defaultSortBy": "createdAt",
+      "defaultSortOrder": "DESC"
+    },
+    "layouts": {
+      "list": [
+        "name",
+        "email",
+        "message",
+        "createdAt"
+      ]
+    },
+    "metadatas": {
+      "name": {
+        "edit": {
+          "label": "Name"
+        },
+        "list": {
+          "label": "Name"
+        }
+      },
+      "email": {
+        "edit": {
+          "label": "Email address"
+        },
+        "list": {
+          "label": "Email address"
+        }
+      },
+      "message": {
+        "edit": {
+          "label": "Message"
+        },
+        "list": {
+          "label": "Message"
+        }
+      },
+      "createdAt": {
+        "list": {
+          "label": "Received"
+        }
+      }
+    }
   }
 }

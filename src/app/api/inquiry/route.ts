@@ -5,6 +5,20 @@ import { MAX_BODY_BYTES, validateInquiry } from '../../../../shared/inquiry.cjs'
 const error = (status: number, message: string, headers?: HeadersInit) =>
   NextResponse.json({ error: message }, { status, headers });
 
+const loopbackHosts = new Set(['127.0.0.1', 'localhost', '[::1]']);
+
+function acceptsOrigin(origin: string, configuredOrigin: string) {
+  try {
+    const expected = new URL(configuredOrigin);
+    if (origin === expected.origin) return true;
+    const actual = new URL(origin);
+    return actual.origin === origin && actual.protocol === expected.protocol && actual.port === expected.port &&
+      loopbackHosts.has(expected.hostname) && loopbackHosts.has(actual.hostname);
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   const contentType = request.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
   if (contentType !== 'application/json') return error(415, 'Unsupported content type.');
@@ -12,7 +26,7 @@ export async function POST(request: NextRequest) {
 
   const allowedOrigin = process.env.FRONTEND_PUBLIC_URL;
   const requestOrigin = request.headers.get('origin');
-  if (allowedOrigin && requestOrigin && requestOrigin !== new URL(allowedOrigin).origin) {
+  if (allowedOrigin && requestOrigin && !acceptsOrigin(requestOrigin, allowedOrigin)) {
     return error(403, 'Unexpected request origin.');
   }
 
