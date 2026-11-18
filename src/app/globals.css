@@ -406,7 +406,7 @@ img { display: block; }
   text-align: center;
   overflow-wrap: anywhere;
 }
-.box-detail:nth-child(2) { border-radius: 31% / 24%; }
+.box-detail:nth-child(2) { border-radius: 31% / 24%; background: #121731; }
 .box-detail:nth-child(3) { aspect-ratio: 450 / 373; border-radius: 25% / 30%; }
 .box-detail:nth-child(4) { aspect-ratio: 1.817; border-radius: 29% / 50%; }
 .box-detail:nth-child(6) { aspect-ratio: .767; border-radius: 25% / 19%; }

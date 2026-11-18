@@ -385,7 +385,9 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
           }
           if (fade) {
             const [start, end] = fade;
-            gsap.fromTo(figure, { opacity: 0 }, {
+            // Keep the finishes card's rounded frame visible during its content fade.
+            const targets = index === 1 ? figure.querySelectorAll('.artwork, figcaption') : figure;
+            gsap.fromTo(targets, { opacity: 0 }, {
               opacity: 1, ease: 'sine.inOut', scrollTrigger: { trigger: figure, start, end, scrub: true },
             });
           }

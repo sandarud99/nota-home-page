@@ -734,6 +734,8 @@ test('the product detail gallery zooms and fades with the scrollbar', async ({ p
 
   const gallery = page.locator('.box-callouts');
   const figures = gallery.locator('.box-detail');
+  const finishes = figures.nth(1);
+  const finishesArtwork = finishes.locator('.artwork');
   await expect(gallery).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   const { gap, imageOffsets } = await gallery.evaluate(section => {
     const cards = section.previousElementSibling!.querySelector('.box-items')!;
@@ -762,7 +764,8 @@ test('the product detail gallery zooms and fades with the scrollbar', async ({ p
     const transform = getComputedStyle(node).transform;
     return transform === 'none' ? 1 : new DOMMatrixReadOnly(transform).a;
   });
-  const alpha = (index: number) => figures.nth(index).evaluate(node => Number(getComputedStyle(node).opacity));
+  const alpha = (index: number) => (index === 1 ? finishesArtwork : figures.nth(index))
+    .evaluate(node => Number(getComputedStyle(node).opacity));
   const fading = (index: number) => expect.poll(async () => {
     const opacity = await alpha(index);
     return opacity > .08 && opacity < .95;
@@ -770,14 +773,19 @@ test('the product detail gallery zooms and fades with the scrollbar', async ({ p
 
   await seek(0, .84);
   await expect.poll(() => zoom(0)).toBeGreaterThan(1.2);
-  await expect(figures.nth(1)).toHaveCSS('opacity', '0');
+  await expect(finishes).toHaveCSS('opacity', '1');
+  await expect(finishes).toHaveCSS('border-top-left-radius', '31% 24%');
+  await expect(finishesArtwork).toHaveCSS('opacity', '0');
+  await expect(finishes.locator('figcaption')).toHaveCSS('opacity', '0');
   await seek(0, .64);
   await fading(1);
+  await expect(finishes).toHaveCSS('opacity', '1');
   expect(await zoom(0)).toBeGreaterThan(1.1);
   expect(await zoom(1)).toBeGreaterThan(1.2);
   const firstFade = await alpha(1);
   await seek(0, .18);
-  await expect(figures.nth(1)).toHaveCSS('opacity', '1');
+  await expect(finishesArtwork).toHaveCSS('opacity', '1');
+  await expect(finishes).toHaveCSS('border-top-left-radius', '31% 24%');
   await expect.poll(() => zoom(0)).toBe(1);
   await expect.poll(() => zoom(1)).toBe(1);
 
@@ -800,7 +808,8 @@ test('the product detail gallery zooms and fades with the scrollbar', async ({ p
   await seek(0, .64);
   await expect.poll(() => alpha(1)).toBeCloseTo(firstFade, 3);
   await seek(0, .84);
-  await expect(figures.nth(1)).toHaveCSS('opacity', '0');
+  await expect(finishesArtwork).toHaveCSS('opacity', '0');
+  await expect(finishes).toHaveCSS('opacity', '1');
 });
 
 test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page }) => {
