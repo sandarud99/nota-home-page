@@ -146,7 +146,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       const specs = select('.spec-scene');
       const groups = Array.from(specs.querySelectorAll<HTMLElement>('.spec-card'));
       const revealEnd = .18;
-      const specTravel = (mobile ? .50 : .97) * Math.max(1, groups.length - 1);
+      const specTravel = mobile ? .50 * Math.max(1, groups.length - 1) : 2.83;
       const specMotion = pin(specs, specTravel, mobile ? undefined : trigger => {
         const duration = trigger.animation?.duration();
         if (duration) {
@@ -156,8 +156,12 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
         }
       });
       const specPen = select('.spec-pen');
-      const firstSpec = mobile ? .16 : .98;
-      const lastSpec = (mobile ? Math.max(firstSpec, groups.length - 1) : firstSpec + (groups.length - 1) * .47) + .22;
+      const cardRise = { start: 1.26, stagger: .38, settle: 2.70 };
+      const firstSpec = mobile ? .16 : (cardRise.start + cardRise.settle) / 2;
+      const lastSpec = mobile
+        ? Math.max(firstSpec, groups.length - 1) + .05
+        : cardRise.settle;
+      const specExit = lastSpec + (mobile ? .17 : .42);
       if (mobile) {
         specMotion.fromTo(specPen, { yPercent: 16 }, { yPercent: 0, duration: .65 }, 0);
         groups.forEach((group, index) => {
@@ -168,6 +172,8 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
         });
       } else {
         const title = select('.spec-scene .section-title');
+        const cards = select('.spec-cards');
+        const belowStage = (card: HTMLElement) => specs.clientHeight - cards.offsetTop - card.offsetTop + 1;
         const titleDelay = .025;
         specMotion
           .fromTo(select('.spec-intro-lines'), { opacity: 1 }, {
@@ -176,17 +182,23 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
           .fromTo(title, { y: () => (specs.offsetHeight - title.offsetHeight) / 2, opacity: 0 }, {
             opacity: 1, duration: revealEnd - titleDelay, ease: 'sine.inOut',
           }, titleDelay)
-          .to(title, { y: 0, duration: .71, ease: 'power1.inOut' }, .27)
-          .fromTo(specPen, { yPercent: 84 }, { yPercent: 0, duration: .79, ease: 'power1.inOut' }, .32);
+          .to(title, { y: 0, duration: 1.03, ease: 'power1.inOut' }, .29)
+          .fromTo(specPen, { yPercent: 100 }, { yPercent: 0, duration: 1.35, ease: 'power1.inOut' }, .14)
+          .fromTo(groups, { y: (_, card: HTMLElement) => belowStage(card) }, {
+            y: (_, card: HTMLElement) => belowStage(card) - Math.min(specs.clientHeight * .096, card.querySelector('h3')!.offsetHeight),
+            duration: .31, ease: 'power1.inOut',
+          }, .63);
+        // Each column starts later and covers the remaining distance by the same scroll point.
         groups.forEach((group, index) => {
-          specMotion.fromTo(group, { y: 35, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: .45 }, .53 + index * .47);
+          const start = cardRise.start + index * cardRise.stagger;
+          specMotion.to(group, { y: 0, duration: cardRise.settle - start, ease: 'power1.inOut' }, start);
         });
         const controls = specs.querySelector('.scene-controls');
-        if (controls) specMotion.fromTo(controls, { autoAlpha: 0 }, { autoAlpha: 1, duration: .24 }, .73);
+        if (controls) specMotion.fromTo(controls, { autoAlpha: 0 }, { autoAlpha: 1, duration: .24 }, firstSpec - .24);
       }
-      specMotion.to({}, { duration: .28 }, lastSpec);
-      if (!mobile) specMotion.fromTo(specs.querySelectorAll('.scene-wipe i'), { scaleY: 0 }, { scaleY: 1, stagger: { each: .043, from: 'center' }, duration: .21 }, lastSpec + .05);
-      track('specifications', specMotion, groups.length, firstSpec / specMotion.duration(), (lastSpec - .17) / specMotion.duration());
+      specMotion.to({}, { duration: .28 }, specExit);
+      if (!mobile) specMotion.fromTo(specs.querySelectorAll('.scene-wipe i'), { scaleY: 0 }, { scaleY: 1, stagger: { each: .072, from: 'center' }, duration: .31 }, specExit);
+      track('specifications', specMotion, groups.length, firstSpec / specMotion.duration(), lastSpec / specMotion.duration());
 
       const manifesto = select('.manifesto');
       pin(manifesto, mobile ? .19 : .87).fromTo(

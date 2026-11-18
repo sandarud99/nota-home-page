@@ -199,6 +199,68 @@ test('desktop hero, sliding menu and panel wipe follow the scroll in both direct
   await expect.poll(fade).toEqual({ title: 1, dividers: 0 });
 });
 
+test('Specifications cards rise from below in order and align when settled', async ({ page }) => {
+  const height = 805;
+  await page.setViewportSize({ width: 1470, height });
+  await page.goto('/');
+  await expect(page.locator('.pin-spacer')).toHaveCount(5);
+  const stage = page.locator('.spec-scene');
+  const cards = stage.locator('.spec-card');
+  await expect(cards.locator('h3')).toHaveText(['Writing System', 'Capture Technology', 'Digital Continuity']);
+  const positions = () => cards.evaluateAll(cards => cards.map(card => ({
+    top: Math.round(card.getBoundingClientRect().top),
+    bottom: Math.round(card.getBoundingClientRect().bottom),
+    details: Math.round(card.querySelector('.spec-card-details')!.getBoundingClientRect().top),
+  })));
+
+  await scrollInScene(stage, .14);
+  await expectPinned(stage);
+  await expect.poll(async () => (await positions()).every(card => card.top >= height)).toBe(true);
+
+  await scrollInScene(stage, .26);
+  await expect.poll(async () => (await positions()).every(card => card.top < height && card.details >= height)).toBe(true);
+  const peek = await positions();
+  expect(peek.map(card => card.top)).toEqual([peek[0].top, peek[0].top, peek[0].top]);
+
+  await scrollInScene(stage, .41);
+  await expect.poll(async () => (await positions())[0].top).toBeLessThan(peek[0].top - 20);
+  const left = await positions();
+  expect(left.slice(1)).toEqual(peek.slice(1));
+  await expect(cards.first()).toHaveCSS('opacity', '1');
+
+  await scrollInScene(stage, .48);
+  await expect.poll(async () => (await positions())[1].top).toBeLessThan(peek[1].top - 15);
+  expect((await positions())[2]).toEqual(peek[2]);
+
+  await scrollInScene(stage, .58);
+  await expect.poll(async () => (await positions())[2].top).toBeLessThan(peek[2].top - 20);
+  const rising = await positions();
+  expect(rising[0].top).toBeLessThan(rising[1].top);
+  expect(rising[1].top).toBeLessThan(rising[2].top);
+
+  await scrollInScene(stage, .74);
+  await expectPinned(stage);
+  await expect.poll(async () => {
+    const [first, ...remaining] = await positions();
+    return first.bottom < height && remaining.every(card => card.top === first.top && card.bottom === first.bottom);
+  }).toBe(true);
+  for (const panel of await cards.locator('.spec-card-details').all()) await expect(panel).toBeInViewport({ ratio: .99 });
+
+  const controls = stage.getByRole('group', { name: 'specification' });
+  const steps = controls.locator('.scene-steps');
+  await expect(steps).toHaveCSS('opacity', '0');
+  const writing = controls.getByRole('button', { name: 'Writing System' });
+  await writing.focus();
+  await expect(steps).toHaveCSS('opacity', '1');
+  await writing.press('Enter');
+  await expect(writing).toHaveAttribute('aria-current', 'step');
+
+  await scrollInScene(stage, .58);
+  await expect.poll(positions).toEqual(rising);
+  await scrollInScene(stage, .26);
+  await expect.poll(positions).toEqual(peek);
+});
+
 test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');

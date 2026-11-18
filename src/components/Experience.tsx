@@ -259,8 +259,10 @@ export default function Experience({ data: d }: { data: Homepage }) {
           <div className="spec-cards">
             {d.specifications.map((item, i) => <article className="spec-card" key={item.id ?? i}>
               <h3>{item.title}</h3>
-              {item.description && <p>{item.description}</p>}
-              <ul>{item.bullets?.map((bullet, j) => <li key={bullet.id ?? j}>{bullet.text}</li>)}</ul>
+              <div className="spec-card-details">
+                {item.description && <p>{item.description}</p>}
+                <ul>{item.bullets?.map((bullet, j) => <li key={bullet.id ?? j}>{bullet.text}</li>)}</ul>
+              </div>
             </article>)}
           </div>
           <SceneControls index={active.specifications} titles={d.specifications.map(item => item.title)} label="specification"
