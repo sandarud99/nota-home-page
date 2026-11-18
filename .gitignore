@@ -1,0 +1,16 @@
+.DS_Store
+node_modules/
+.next/
+*.tsbuildinfo
+.env*
+!.env.example
+playwright-report/
+test-results/
+evidence/
+cms/.cache/
+cms/.tmp/
+cms/.strapi/
+cms/dist/
+cms/build/
+cms/public/uploads/*
+!cms/public/uploads/.gitkeep

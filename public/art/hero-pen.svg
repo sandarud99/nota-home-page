@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 620" role="img" aria-label="Precision fountain pen illustration">
+ <defs>
+  <linearGradient id="barrel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#181b1d"/><stop offset=".13" stop-color="#777b7c"/><stop offset=".32" stop-color="#343738"/><stop offset=".65" stop-color="#101213"/><stop offset=".84" stop-color="#373a3b"/><stop offset="1" stop-color="#0b0d0f"/></linearGradient>
+  <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#6b7073"/><stop offset=".12" stop-color="#e2e4e3"/><stop offset=".31" stop-color="#656a6d"/><stop offset=".49" stop-color="#17191b"/><stop offset=".72" stop-color="#505659"/><stop offset=".89" stop-color="#14191a"/><stop offset="1" stop-color="#8c8e90"/></linearGradient>
+  <linearGradient id="nib" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#151a1b"/><stop offset=".44" stop-color="#9ea0a0"/><stop offset=".7" stop-color="#141617"/><stop offset="1" stop-color="#3f4447"/></linearGradient>
+  <filter id="shadow"><feGaussianBlur stdDeviation="17"/></filter>
+ </defs>
+ <ellipse cx="936" cy="355" rx="560" ry="72" fill="#070808" opacity=".28" filter="url(#shadow)"/>
+ <path d="M65 301 320 270 365 238 377 367 319 348Z" fill="url(#nib)" stroke="#050607" stroke-width="3"/>
+ <path d="M65 301 312 298 351 318" fill="none" stroke="#b0b3b2" stroke-width="2" opacity=".45"/>
+ <path d="M130 302h220" stroke="#0d0e0f" stroke-width="2"/>
+ <path d="M341 255 Q355 238 387 234 L478 234 478 365 392 365 Q355 359 341 342Z" fill="url(#chrome)"/>
+ <rect x="472" y="214" width="890" height="170" rx="11" fill="url(#barrel)" stroke="#090b0d" stroke-width="2"/>
+ <rect x="469" y="214" width="24" height="170" rx="4" fill="#0b0d0e" opacity=".85"/>
+ <path d="M512 239 H1325" stroke="#c6c7c6" stroke-width="3" opacity=".38"/>
+ <path d="M516 357 H1350" stroke="#050709" stroke-width="7" opacity=".55"/>
+ <rect x="1357" y="199" width="203" height="201" rx="20" fill="url(#chrome)" stroke="#151719" stroke-width="2"/>
+ <path d="M1400 205V393" stroke="#f5f6f4" stroke-width="3" opacity=".28"/>
+</svg>
