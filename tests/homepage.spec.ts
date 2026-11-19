@@ -950,6 +950,63 @@ test('every pinned chapter selector brings its content into view', async ({ page
   }
 });
 
+test('the last finish reveals the sticky footer and its links stay keyboard accessible', async ({ page }) => {
+  const height = 880;
+  await page.setViewportSize({ width: 1469, height });
+  await page.goto('/');
+  await expect(page.locator('.pin-spacer')).toHaveCount(6);
+  await page.evaluate(() => document.fonts.ready);
+
+  const stage = page.locator('.finish-frame');
+  const footer = page.getByRole('contentinfo');
+  const band = page.locator('.footer-brand');
+  const controls = stage.getByRole('group', { name: 'pen finish' });
+  const selectors = controls.getByRole('button');
+  const finalSelector = selectors.last();
+  const { end } = await scrollInScene(stage, .98);
+  const seek = (top: number) => page.evaluate(top => scrollTo({ top, behavior: 'instant' }), top);
+  const footerVisible = () => footer.evaluate(node => node.contains(document.elementFromPoint(8, innerHeight - 8)));
+
+  await expect(selectors).toHaveCount(5);
+  await expect(finalSelector).toHaveAttribute('aria-current', 'step');
+  expect((await controls.boundingBox())!.width).toBeGreaterThan(600);
+  await expect(footer).toHaveCSS('position', 'sticky');
+  await expectPinned(stage);
+  expect(await footerVisible()).toBe(false);
+  const footerTop = (await footer.boundingBox())!.y;
+
+  for (const lift of [55, 180]) {
+    await seek(end + lift);
+    await expect.poll(async () => Math.abs((await stage.boundingBox())!.y + lift)).toBeLessThan(3);
+    expect((await footer.boundingBox())!.y).toBeCloseTo(footerTop, 0);
+    expect(await footerVisible()).toBe(true);
+    await expect(band).not.toBeInViewport();
+  }
+
+  await scrollInScene(stage, .98);
+  await expectPinned(stage);
+  expect(await footerVisible()).toBe(false);
+  await finalSelector.focus();
+  await page.keyboard.press('Tab');
+  const firstLink = footer.getByRole('link').first();
+  await expect(firstLink).toBeFocused();
+  await expect.poll(() => firstLink.evaluate(link => {
+    const { x, y, width, height } = link.getBoundingClientRect();
+    return link.contains(document.elementFromPoint(x + width / 2, y + height / 2));
+  })).toBe(true);
+
+  await seek(await page.evaluate(() => document.documentElement.scrollHeight));
+  await expect(band).toBeInViewport({ ratio: .99 });
+
+  await page.setViewportSize({ width: 812, height: 360 });
+  await expect(page.locator('.pin-spacer')).toHaveCount(4);
+  await page.evaluate(() => (document.activeElement as HTMLElement).blur());
+  await expect(footer).toHaveCSS('position', 'static');
+  const revealStart = await page.locator('#main').evaluate(main => main.getBoundingClientRect().bottom + scrollY - innerHeight);
+  await seek(revealStart + 150);
+  await expect(footer.locator('.footer-main > p')).toBeInViewport();
+});
+
 test('mobile navigation and the order dialog support keyboard focus', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
@@ -993,6 +1050,7 @@ test('reduced motion exposes every chapter without pinning', async ({ page }) =>
     await expect(page.getByRole('heading', { name: label })).toBeVisible();
   }
   await expect(page.getByRole('group', { name: 'pen finish' })).toBeHidden();
+  await expect(page.getByRole('contentinfo')).toHaveCSS('position', 'static');
   await expect(page.locator('.box-overview .highlight-letter').first()).toHaveCSS('opacity', '1');
   const figures = page.locator('.box-detail');
   for (const figure of await figures.all()) await expect(figure).toHaveCSS('opacity', '1');

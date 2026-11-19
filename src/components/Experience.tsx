@@ -373,7 +373,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
               <h3>{color.title}</h3><p>{color.description}</p>
             </div>
           </article>)}
-          <SceneControls index={active.finishes} titles={d.colors.map(item => item.title)} label="pen finish"
+          <SceneControls index={active.finishes} titles={d.colors.map(item => item.title)} label="pen finish" arrows={false}
             select={index => goToScene('finishes', index)} />
         </div>
       </section>
@@ -390,6 +390,10 @@ export default function Experience({ data: d }: { data: Homepage }) {
       </div>
       <div className="footer-credits"><span>{d.footerCopyright}</span><span>{d.footerProject}</span><span>{d.footerCredit}</span></div>
     </footer>
+    <div className="footer-brand">
+      <ImageView artwork={{ ...d.brandMark, alt: '' }} />
+      <span>{d.brand}</span>
+    </div>
     {inquiryOpen && <InquiryModal copy={d.formCopy} close={closeInquiry} />}
   </div>;
 }

@@ -26,14 +26,19 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
     const about = select('#about');
     const smartpaper = select('#smartpaper');
     const boxSection = select('#inside-the-box');
+    const footer = select('.footer');
     const updateProgress = () => {
       const scroller = document.scrollingElement!;
       const distance = scroller.scrollHeight - scroller.clientHeight;
       const ratio = distance > 0 ? gsap.utils.clamp(0, 1, window.scrollY / distance) : 0;
       progress.style.setProperty('--progress', String(ratio));
     };
+    const updateViewport = () => {
+      footer.toggleAttribute('data-sticky', footer.offsetHeight <= window.innerHeight);
+      updateProgress();
+    };
     window.addEventListener('scroll', updateProgress, { passive: true });
-    ScrollTrigger.addEventListener('refresh', updateProgress);
+    ScrollTrigger.addEventListener('refresh', updateViewport);
 
     const media = gsap.matchMedia(page);
     let refreshFrame = 0;
@@ -453,7 +458,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       cancelAnimationFrame(refreshFrame);
       layout.disconnect();
       window.removeEventListener('scroll', updateProgress);
-      ScrollTrigger.removeEventListener('refresh', updateProgress);
+      ScrollTrigger.removeEventListener('refresh', updateViewport);
       media.revert();
     };
   }, [root]);
