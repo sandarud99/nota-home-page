@@ -409,7 +409,7 @@ img { display: block; }
   text-align: center;
   overflow-wrap: anywhere;
 }
-.box-detail:nth-child(2) { border-radius: 31% / 24%; background: #121731; }
+.box-detail:nth-child(2) { clip-path: inset(0 round 31% / 24%); background: #121731; }
 .box-detail:nth-child(3) { aspect-ratio: 450 / 373; border-radius: 25% / 30%; }
 .box-detail:nth-child(4) { aspect-ratio: 1.817; border-radius: 29% / 50%; }
 .box-detail:nth-child(6) { aspect-ratio: .767; border-radius: 25% / 19%; }
@@ -418,7 +418,7 @@ img { display: block; }
   to { transform: scale(1.34); }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .box-detail:nth-child(2) .artwork { animation: detail-zoom-in 6s linear infinite; }
+  .box-detail:nth-child(2) .artwork img { animation: detail-zoom-in 6s linear infinite; }
 }
 @media (min-width: 992px) {
   .box-callouts {
@@ -574,7 +574,7 @@ img { display: block; }
   .box-items h3 { margin-bottom: .35em; font-size: clamp(18px, 5.3vw, 26px); letter-spacing: -.05em; }
   .box-callouts { padding-block-start: clamp(48px, 18.7vw, 73px); }
   .box-detail:is(:nth-child(1), :nth-child(5)) { aspect-ratio: .94; }
-  .box-detail:nth-child(2) { aspect-ratio: .6; border-radius: 50% / 30%; }
+  .box-detail:nth-child(2) { aspect-ratio: .6; clip-path: inset(0 round 50% / 30%); }
   .box-detail:nth-child(4) { aspect-ratio: .6; border-radius: 26% / 16%; }
   .box-detail:nth-child(6) { aspect-ratio: 571 / 476; border-radius: 30% / 36%; }
   .box-detail figcaption { font-size: clamp(13px, 3.55vw, 18px); }

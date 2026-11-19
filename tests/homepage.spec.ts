@@ -780,6 +780,8 @@ test('the product detail gallery responds to scroll and the blue photo loops on 
   const figures = gallery.locator('.box-detail');
   const finishes = figures.nth(1);
   const finishesArtwork = finishes.locator('.artwork');
+  const finishesPhoto = finishesArtwork.locator('img');
+  const finishesClip = 'inset(0px round 31% / 24%)';
   await expect(gallery).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   const { gap, imageOffsets } = await gallery.evaluate(section => {
     const cards = section.previousElementSibling!.querySelector('.box-items')!;
@@ -804,7 +806,7 @@ test('the product detail gallery responds to scroll and the blue photo loops on 
   expect(frames[3].width).toBeGreaterThan(frames[4].width);
 
   const seek = (index: number, inset: number) => page.evaluate(top => scrollTo({ top, behavior: 'instant' }), frames[index].top - height * inset);
-  const zoom = (index: number) => figures.nth(index).locator('.artwork').evaluate(node => {
+  const zoom = (index: number) => (index === 1 ? finishesPhoto : figures.nth(index).locator('.artwork')).evaluate(node => {
     const transform = getComputedStyle(node).transform;
     return transform === 'none' ? 1 : new DOMMatrixReadOnly(transform).a;
   });
@@ -818,28 +820,32 @@ test('the product detail gallery responds to scroll and the blue photo loops on 
   await seek(0, .84);
   await expect.poll(() => zoom(0)).toBeGreaterThan(1.2);
   await expect(finishes).toHaveCSS('opacity', '1');
-  await expect(finishes).toHaveCSS('border-top-left-radius', '31% 24%');
+  await expect(finishes).toHaveCSS('clip-path', finishesClip);
   await expect(finishesArtwork).toHaveCSS('opacity', '0');
   await expect(finishes.locator('figcaption')).toHaveCSS('opacity', '0');
   await seek(0, .64);
   await fading(1);
   await expect(finishes).toHaveCSS('opacity', '1');
+  await expect(finishes).toHaveCSS('clip-path', finishesClip);
   expect(await zoom(0)).toBeGreaterThan(1.1);
   const firstFade = await alpha(1);
   await seek(0, .18);
   await expect(finishesArtwork).toHaveCSS('opacity', '1');
-  await expect(finishes).toHaveCSS('border-top-left-radius', '31% 24%');
+  await expect(finishes).toHaveCSS('clip-path', finishesClip);
   await expect.poll(() => zoom(0)).toBe(1);
 
-  await expect(finishesArtwork).toHaveCSS('animation-iteration-count', 'infinite');
+  await expect(finishesPhoto).toHaveCSS('animation-iteration-count', 'infinite');
+  await expect(finishesArtwork).toHaveCSS('transform', 'none');
   const scrollBeforeZoom = await readScroll(page);
-  await finishesArtwork.evaluate(async node => {
+  await finishesPhoto.evaluate(async node => {
     const [animation] = node.getAnimations();
     await animation.ready;
     animation.currentTime = Number(animation.effect!.getTiming().duration) * .9;
   });
   await expect.poll(() => zoom(1)).toBeGreaterThan(1.28);
+  await expect(finishes).toHaveCSS('clip-path', finishesClip);
   await expect.poll(() => zoom(1)).toBeLessThan(1.07);
+  await expect(finishes).toHaveCSS('clip-path', finishesClip);
   await expect.poll(() => zoom(1)).toBeGreaterThan(1.08);
   expect(await readScroll(page)).toBe(scrollBeforeZoom);
 
@@ -979,5 +985,7 @@ test('reduced motion exposes every chapter without pinning', async ({ page }) =>
   await expect(page.getByRole('group', { name: 'pen finish' })).toBeHidden();
   await expect(page.locator('.box-overview .highlight-letter').first()).toHaveCSS('opacity', '1');
   for (const figure of await page.locator('.box-detail').all()) await expect(figure).toHaveCSS('opacity', '1');
-  await expect(page.locator('.box-detail').nth(1).locator('.artwork')).toHaveCSS('animation-name', 'none');
+  const finishes = page.locator('.box-detail').nth(1);
+  await expect(finishes).toHaveCSS('clip-path', 'inset(0px round 50% / 30%)');
+  await expect(finishes.locator('.artwork img')).toHaveCSS('animation-name', 'none');
 });
