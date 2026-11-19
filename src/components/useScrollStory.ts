@@ -12,9 +12,10 @@ export const desktopMotionQuery = '(width > 1024px) and ((width > 1366px) or (no
 export type Scene = 'specifications' | 'paper' | 'finishes';
 type Chapter = { trigger: ScrollTrigger; first: number; last: number; count: number };
 
-export function useScrollStory(root: RefObject<HTMLDivElement | null>, initialFinish: number) {
+export function useScrollStory(root: RefObject<HTMLDivElement | null>, initialFinish: number, menuOpen: boolean) {
   const chapters = useRef<Partial<Record<Scene, Chapter>>>({});
   const lenis = useRef<Lenis | null>(null);
+  const syncHeaderColor = useRef<(() => void) | null>(null);
   const [active, setActive] = useState<Record<Scene, number>>({ specifications: 0, paper: 0, finishes: initialFinish });
 
   useLayoutEffect(() => {
@@ -26,7 +27,9 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>, initialFi
     const progress = select('.page-progress');
     const hero = select('.hero');
     const header = select('.site-header');
-    const wordmark = select('.site-header .brand');
+    const headerControls = Array.from(header.querySelectorAll<HTMLElement>(
+      ':scope > :is(.brand, .mobile-toggle, .mobile-order), :scope > .header-navigation a',
+    ));
     const main = select('#main');
     const specSection = select('#specifications');
     const audience = select('#who-its-for');
@@ -36,6 +39,11 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>, initialFi
     const footer = select('.footer');
     const compact = window.matchMedia(compactPageQuery);
     const pinnedHero = window.matchMedia(desktopMotionQuery);
+    const wipes = [
+      { stage: hero, panels: [...hero.querySelectorAll('.scene-wipe i')], light: true },
+      { stage: specSection, panels: [...specSection.querySelectorAll('.spec-exit-wipe i')], light: false },
+      { stage: smartpaper, panels: [...smartpaper.querySelectorAll('.paper-entry-wipe i')], light: true },
+    ];
     // Keep the header visible through the hero's pen pullback.
     const headerExitPosition = () => pinnedHero.matches
       ? hero.offsetHeight * 1.57
@@ -43,27 +51,46 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>, initialFi
     let headerExit = headerExitPosition();
     let previousHeaderScroll = 0;
 
-    const updateHeaderColor = () => {
-      if (header.classList.contains('menu-open')) return;
-      // The rendered scene at the wordmark can differ from the document position during a pin.
-      const x = wordmark.offsetLeft + 4;
-      const y = wordmark.offsetTop + wordmark.offsetHeight / 2;
-      const surface = document.elementsFromPoint(x, y).find(element => main.contains(element));
-      const aboutPanel = surface?.closest('.about-panel');
-      let light = Boolean(surface?.closest('.spec-scene, #smartpaper > .section-title, .box-intro .section-title, .box-contents, .finish-slide.dark-text'));
-      if (aboutPanel) light = Number(getComputedStyle(aboutPanel).opacity) >= .5;
+    const isLightSurface = (x: number, y: number) => {
+      const surface = document.elementsFromPoint(x, y).find(element => {
+        if (!main.contains(element)) return false;
+        const fadingPanel = element.closest('.about-panel, .finish-slide');
+        return !fadingPanel || Number(getComputedStyle(fadingPanel).opacity) >= .5;
+      });
+      if (!surface) return false;
 
-      // The decorative panels are excluded from hit testing.
-      const wipe = surface?.closest('.hero, .spec-scene, .paper-story')
-        ?.querySelector('.scene-wipe i, .spec-exit-wipe i');
-      if (wipe) {
-        const { left, right, top, bottom } = wipe.getBoundingClientRect();
-        if (x >= left && x < right && y >= top && y < bottom) light = !wipe.closest('.spec-exit-wipe');
-      }
-      header.toggleAttribute('data-light-surface', light);
+      // Wipes use pointer-events: none, so check their painted bounds separately.
+      const wipe = wipes.find(({ stage }) => stage.contains(surface));
+      if (wipe?.panels.some(panel => {
+        const { left, right, top, bottom } = panel.getBoundingClientRect();
+        return x >= left && x < right && y >= top && y < bottom;
+      })) return wipe.light;
+      return surface === main || Boolean(surface.closest(
+        '.spec-scene, .about-panel, #smartpaper > .section-title, .box-intro .section-title, .box-contents, .finish-slide.dark-text',
+      ));
+    };
+    const updateHeaderColor = () => {
+      if (header.classList.contains('menu-open') || page.querySelector('.inquiry-dialog[open]')) return;
+      // Sample where each control settles, including when the header is sliding into view.
+      const { top: headerTop, bottom } = header.getBoundingClientRect();
+      if (bottom <= 0 && header.matches('[data-hidden]:not(:has(:focus-visible))')) return;
+      const light = headerControls.map(control => {
+        const { left, top, width, height } = control.getBoundingClientRect();
+        return width > 0 && height > 0 && isLightSurface(left + width / 2, top + height / 2 - headerTop);
+      });
+      headerControls.forEach((control, index) => control.toggleAttribute('data-light-surface', light[index]));
+    };
+    syncHeaderColor.current = updateHeaderColor;
+    let headerColorFrame = 0;
+    const scheduleHeaderColor = () => {
+      if (headerColorFrame) return;
+      headerColorFrame = requestAnimationFrame(() => {
+        headerColorFrame = 0;
+        updateHeaderColor();
+      });
     };
     const updateScroll = () => {
-      updateHeaderColor();
+      scheduleHeaderColor();
       if (compact.matches) return;
       const scroller = document.scrollingElement!;
       const distance = scroller.scrollHeight - scroller.clientHeight;
@@ -88,6 +115,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>, initialFi
       updateScroll();
     };
     window.addEventListener('scroll', updateScroll, { passive: true });
+    header.addEventListener('focusin', scheduleHeaderColor);
     ScrollTrigger.addEventListener('refresh', updateViewport);
 
     const media = gsap.matchMedia(page);
@@ -460,13 +488,20 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>, initialFi
       cancelAnimationFrame(refreshFrame);
       layout.disconnect();
       window.removeEventListener('scroll', updateScroll);
+      header.removeEventListener('focusin', scheduleHeaderColor);
       ScrollTrigger.removeEventListener('refresh', updateViewport);
       media.revert();
+      cancelAnimationFrame(headerColorFrame);
       header.removeAttribute('data-hidden');
-      header.removeAttribute('data-light-surface');
+      headerControls.forEach(control => control.removeAttribute('data-light-surface'));
+      syncHeaderColor.current = null;
       footer.removeAttribute('data-sticky');
     };
   }, [root]);
+
+  useLayoutEffect(() => {
+    syncHeaderColor.current?.();
+  }, [active.finishes, menuOpen]);
 
   function goToScene(name: Scene, index: number) {
     const chapter = chapters.current[name];

@@ -66,7 +66,9 @@ for (const [width, height, touch] of viewports) {
         await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), travel);
         await expect.poll(async () => (await camera.boundingBox())!.y).toBeCloseTo(start - travel, 0);
         await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
-        await expect(header).toHaveCSS('color', 'rgb(8, 8, 8)');
+        await expect(header.getByRole('link', { name: /home$/ })).toHaveCSS('color', 'rgb(0, 0, 0)');
+        await expect(header.getByRole('button', { name: 'Open navigation' })).toHaveCSS('color', 'rgb(0, 0, 0)');
+        await expect(header.locator('.mobile-order .brand-mark')).toHaveCSS('filter', 'none');
         for (const label of ['Writing System', 'Capture Technology', 'Digital Continuity']) {
           await expect(page.getByRole('heading', { name: label })).toBeVisible();
         }
@@ -227,7 +229,8 @@ test('desktop Lottie frames, sliding menu and panel wipe follow the scroll in bo
   await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
   await expect(header).toHaveCSS('background-image', 'none');
   await expect(header).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-  await expect(header).toHaveCSS('color', 'rgb(8, 8, 8)');
+  await expect(header.getByRole('link', { name: /home$/ })).toHaveCSS('color', 'rgb(0, 0, 0)');
+  await expect.poll(() => links.evaluateAll(items => items.every(item => getComputedStyle(item).color === 'rgb(0, 0, 0)'))).toBe(true);
 
   await scrollInScene(hero, .60);
   await expect(header).toBeVisible();
@@ -353,6 +356,7 @@ test('the center-out split hands off to the pinned manifesto and audience fades'
   await page.goto('/');
   await expect(page.locator('.pin-spacer')).toHaveCount(6);
   const specs = page.locator('.spec-scene');
+  const header = page.getByRole('banner');
   const bands = specs.locator('.spec-exit-wipe i');
   const thought = page.locator('.thought-intro');
   const manifesto = thought.locator('.manifesto');
@@ -378,6 +382,11 @@ test('the center-out split hands off to the pinned manifesto and audience fades'
 
   await scrollInScene(specs, .94);
   await expect.poll(async () => (await widths())[0]).toBeGreaterThan(early[0] + 300);
+  await scrollInScene(specs, .87);
+  await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
+  await expect(header.getByRole('link', { name: /home$/ })).toHaveCSS('color', 'rgb(0, 0, 0)');
+  await expect(header.getByRole('link', { name: 'Specifications' })).toHaveCSS('color', 'rgb(0, 0, 0)');
+  await expect(header.getByRole('link', { name: 'Inside the box' })).toHaveCSS('color', 'rgb(255, 255, 255)');
 
   await scrollInScene(thought, .02);
   await expectPinned(thought);
@@ -385,6 +394,7 @@ test('the center-out split hands off to the pinned manifesto and audience fades'
   await expect(thought).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   await expect(manifesto).toHaveCSS('opacity', '0');
   await expect(audience).toHaveCSS('opacity', '0');
+  await expect(header).not.toBeInViewport();
   expect(await thought.evaluate(stage => stage.contains(document.elementFromPoint(10, 10)))).toBe(true);
 
   await scrollInScene(thought, .12);
@@ -410,6 +420,8 @@ test('the center-out split hands off to the pinned manifesto and audience fades'
 
   await scrollInScene(thought, .49);
   await expect.poll(leadOpacity).toBeCloseTo(partialLead, 3);
+  await expect(header.getByRole('link', { name: /home$/ })).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(header.getByRole('link', { name: 'Specifications' })).toHaveCSS('color', 'rgb(255, 255, 255)');
   await scrollInScene(specs, .83);
   await expect.poll(widths).toEqual(early);
 
@@ -946,7 +958,7 @@ test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page 
   await expect(controls.locator('[aria-current]')).toHaveAccessibleName('For the pen, it’s a precise map');
   await expectPinned(paper);
   await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
-  await expect(header).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(header.getByRole('link', { name: 'Specifications' })).toHaveCSS('color', 'rgb(255, 255, 255)');
   await page.mouse.wheel(0, 180);
   await expect(header).not.toBeInViewport();
 });
@@ -971,6 +983,9 @@ test('touch moves the page without advancing the finishes', async ({ browser }) 
     await expect.poll(() => readScroll(page)).toBeLessThan(after - 100);
     await expect(controls.locator('[aria-current]')).toHaveAccessibleName('Graphite Black.');
     await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
+    await expect(header.getByRole('link', { name: /home$/ })).toHaveCSS('color', 'rgb(255, 255, 255)');
+    await expect(header.getByRole('button', { name: 'Open navigation' })).toHaveCSS('color', 'rgb(255, 255, 255)');
+    await expect(header.locator('.mobile-order .brand-mark')).toHaveCSS('filter', 'invert(1)');
     const blue = controls.getByRole('button', { name: 'Mist Blue.' });
     await blue.scrollIntoViewIfNeeded();
     const beforeTap = await readScroll(page);

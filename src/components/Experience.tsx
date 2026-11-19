@@ -203,7 +203,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
   const menuButton = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [inquiryOpen, setInquiryOpen] = useState(false);
-  const { active, goToScene, setScrollLocked } = useScrollStory(page, d.colors.length > 1 ? 1 : 0);
+  const { active, goToScene, setScrollLocked } = useScrollStory(page, d.colors.length > 1 ? 1 : 0, menuOpen);
   const orderLabel = `${d.hero.ctaLabel} ${d.hero.priceLabel} • ${d.hero.price}`;
   const uploadedProfile = mediaUrl(d.hero.profileImage);
   const specImage = d.specsArtwork.mobileImage;
