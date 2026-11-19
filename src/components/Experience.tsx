@@ -204,6 +204,9 @@ export default function Experience({ data: d }: { data: Homepage }) {
     (specImage?.height ?? d.specsArtwork.mobileImageHeight) === 141
     ? mediaUrl(specImage, d.specsArtwork.mobileImageUrl) : undefined;
   const heroProfile = uploadedProfile || specProfile;
+  const heroAnimation = d.hero.animationEnabled === false
+    ? undefined
+    : mediaUrl(d.hero.animation, d.hero.animationUrl ?? '/animations/nota-pen.json');
 
   useEffect(() => {
     const desktop = window.matchMedia('(min-width: 992px)');
@@ -242,6 +245,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
             </picture>}
             <ImageView artwork={d.hero} className="hero-pen" fallback="/art/hero-pen.svg" eager />
           </div>
+          {heroAnimation && <div className="hero-motion" data-source={heroAnimation} aria-hidden="true" />}
           <header className={`site-header ${menuOpen ? 'menu-open' : ''}`}
             onKeyDown={event => {
               if (event.key === 'Escape' && menuOpen && !inquiryOpen) {

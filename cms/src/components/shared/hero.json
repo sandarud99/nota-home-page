@@ -2,7 +2,7 @@
   "collectionName": "components_shared_hero",
   "info": {
     "displayName": "Hero",
-    "description": "Opening title, order price, and responsive pen imagery."
+    "description": "Opening title, order price, responsive pen imagery, and desktop animation."
   },
   "attributes": {
     "title": {
@@ -50,6 +50,15 @@
       "type": "media",
       "multiple": false,
       "allowedTypes": ["images"]
+    },
+    "animationEnabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "animation": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["files"]
     }
   },
   "config": {
@@ -89,7 +98,19 @@
       "profileImage": {
         "edit": {
           "label": "Desktop full pen profile",
-          "description": "Optional side-on pen image for the zoom-out. Choose a transparent image with proportions close to 896 × 141."
+          "description": "Optional side-on image for the zoom-out when the desktop animation is disabled or unavailable. Choose a transparent image with proportions close to 896 × 141."
+        }
+      },
+      "animationEnabled": {
+        "edit": {
+          "label": "Play desktop pen animation",
+          "description": "Turn off to show your desktop photo and full pen profile while scrolling."
+        }
+      },
+      "animation": {
+        "edit": {
+          "label": "Desktop Lottie animation",
+          "description": "Upload a standalone Lottie JSON export with embedded images. Leave empty to use the original pen sequence."
         }
       },
       "alt": {

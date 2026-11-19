@@ -66,6 +66,7 @@ export const homepageData = {
     priceLabel: 'Nota One',
     price: '$300',
     ctaLabel: 'Order',
+    animationUrl: '/animations/nota-pen.json',
     ...artwork('hero-desktop', 'Silver NŌTA fountain pen and nib', 'hero-mobile'),
   },
   menuArtwork: artwork('order-desktop', 'Two blue pen finishes', 'order-mobile'),

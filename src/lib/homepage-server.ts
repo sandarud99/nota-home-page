@@ -52,6 +52,7 @@ export const getHomepage = cache(async (): Promise<Homepage> => {
     hero: {
       ...withArt(data.hero),
       profileImage: data.hero.profileImage ? resolveMedia(data.hero.profileImage, origin) : null,
+      animation: data.hero.animation ? resolveMedia(data.hero.animation, origin) : null,
     },
     menuArtwork: withArt(data.menuArtwork),
     specsArtwork: withArt(data.specsArtwork),

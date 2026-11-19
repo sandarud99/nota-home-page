@@ -48,7 +48,9 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
 
       const hero = page.locator('.hero');
       const camera = hero.locator('.hero-camera');
+      const motion = hero.locator('.hero-motion');
       if (width < 992) {
+        await expect(motion.locator('canvas')).toHaveCount(0);
         const start = (await camera.boundingBox())!.y;
         const header = hero.locator('.site-header');
         await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), Math.round(height * .12));
@@ -59,12 +61,12 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
         await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
         await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
       } else {
-        const start = (await camera.boundingBox())!.x;
+        await expect(motion).toHaveAttribute('data-frame', '0');
         await scrollInScene(hero, .3);
         await expectPinned(hero);
-        await expect.poll(async () => (await camera.boundingBox())!.x).toBeLessThan(start - 80);
-        await scrollInScene(hero, .02);
-        await expect.poll(async () => (await camera.boundingBox())!.x).toBeCloseTo(start, 0);
+        await expect.poll(async () => Number(await motion.getAttribute('data-frame'))).toBeGreaterThan(10);
+        await scrollInScene(hero, 0);
+        await expect(motion).toHaveAttribute('data-frame', '0');
       }
 
       const specs = page.locator('.spec-scene');
@@ -105,25 +107,38 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
   });
 }
 
-test('desktop hero, sliding menu and panel wipe follow the scroll in both directions', async ({ page }) => {
+test('desktop Lottie frames, sliding menu and panel wipe follow the scroll in both directions', async ({ page }) => {
   await page.setViewportSize({ width: 1470, height: 762 });
   await page.goto('/');
   await expect(page.locator('.pin-spacer')).toHaveCount(6);
   const hero = page.locator('.hero');
   const camera = hero.locator('.hero-camera');
-  const profile = hero.locator('.hero-profile');
+  const motion = hero.locator('.hero-motion');
   const header = hero.locator('.site-header');
   const panels = hero.locator('.scene-wipe i');
-  await expect(profile).toHaveAttribute('data-ready', '');
+  await expect(motion).toHaveAttribute('data-frame', '0');
+  await expect(camera).toHaveCSS('opacity', '0');
   await expect(panels).toHaveCount(6);
 
-  const start = (await camera.boundingBox())!;
+  const paintedFrame = () => motion.locator('canvas').evaluate(canvas => {
+    const sample = document.createElement('canvas');
+    sample.width = 48;
+    sample.height = 27;
+    const context = sample.getContext('2d')!;
+    context.drawImage(canvas as HTMLCanvasElement, 0, 0, sample.width, sample.height);
+    return context.getImageData(0, 0, sample.width, sample.height).data
+      .reduce((sum, value, index) => sum + value * (index + 1), 0);
+  });
+  const firstFrame = await paintedFrame();
+  expect(firstFrame).toBeGreaterThan(0);
+
   await scrollInScene(hero, .36);
   await expectPinned(hero);
-  await expect.poll(async () => (await camera.boundingBox())!.x).toBeLessThan(-60);
-  const wide = (await profile.boundingBox())!.width;
+  await expect(motion).toHaveAttribute('data-frame', '40');
+  expect(await paintedFrame()).not.toBe(firstFrame);
   await scrollInScene(hero, .60);
-  await expect.poll(async () => (await profile.boundingBox())!.width).toBeLessThan(wide * .72);
+  await expect(motion).toHaveAttribute('data-frame', '67');
+  const pullback = await paintedFrame();
   await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
 
   await scrollInScene(hero, .65);
@@ -132,6 +147,7 @@ test('desktop hero, sliding menu and panel wipe follow the scroll in both direct
   const { end } = await scrollInScene(hero, .84);
   await expect(header).toBeHidden();
   await expectPinned(hero);
+  await expect(motion).toHaveAttribute('data-frame', '75');
   const heights = () => panels.evaluateAll(columns => columns.map(column => column.getBoundingClientRect().height));
   await expect.poll(async () => (await heights())[0]).toBeGreaterThan(750);
   const rise = await heights();
@@ -175,8 +191,11 @@ test('desktop hero, sliding menu and panel wipe follow the scroll in both direct
   await expect(header).toBeVisible();
   await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
   await expect.poll(heights).toEqual([0, 0, 0, 0, 0, 0]);
-  await scrollInScene(hero, .02);
-  await expect.poll(async () => (await camera.boundingBox())!.x).toBeCloseTo(start.x, 0);
+  await expect(motion).toHaveAttribute('data-frame', '67');
+  expect(await paintedFrame()).toBe(pullback);
+  await scrollInScene(hero, 0);
+  await expect(motion).toHaveAttribute('data-frame', '0');
+  expect(await paintedFrame()).toBe(firstFrame);
 
   await header.locator('a[href="#specifications"]').click();
   await expect(page).toHaveURL(/#specifications$/);
@@ -189,6 +208,8 @@ test('desktop hero, sliding menu and panel wipe follow the scroll in both direct
 
   await page.setViewportSize({ width: 768, height: 1024 });
   await expect(page.locator('.pin-spacer')).toHaveCount(4);
+  await expect(motion.locator('canvas')).toHaveCount(0);
+  await expect(camera).toHaveCSS('opacity', '1');
   await expect(page.locator('.hero-stage')).toHaveCSS('margin-bottom', '0px');
   await expect.poll(fade).toEqual({ title: 1, dividers: 0 });
 
@@ -197,6 +218,29 @@ test('desktop hero, sliding menu and panel wipe follow the scroll in both direct
   await page.goto('/#specifications');
   await expect(specHeading).toBeInViewport();
   await expect.poll(fade).toEqual({ title: 1, dividers: 0 });
+});
+
+test('desktop hero uses the pen photos when the animation cannot be drawn', async ({ page }) => {
+  await page.setViewportSize({ width: 1470, height: 762 });
+  const animationUrl = /\/(animations\/nota-pen|uploads\/nota_pen_[^/]+)\.json$/;
+  await page.route(animationUrl, route => route.fulfill({ json: { layers: [] } }));
+  const loaded = page.waitForResponse(animationUrl);
+  await page.goto('/');
+  await loaded;
+
+  const hero = page.locator('.hero');
+  const camera = hero.locator('.hero-camera');
+  const profile = hero.locator('.hero-profile');
+  await expect(hero.locator('.hero-motion canvas')).toHaveCount(0);
+  await expect(camera).toHaveCSS('opacity', '1');
+  await expect(profile).toHaveAttribute('data-ready', '');
+
+  await scrollInScene(hero, .36);
+  await expectPinned(hero);
+  await expect.poll(async () => (await camera.boundingBox())!.x).toBeLessThan(-60);
+  const wide = (await profile.boundingBox())!.width;
+  await scrollInScene(hero, .60);
+  await expect.poll(async () => (await profile.boundingBox())!.width).toBeLessThan(wide * .72);
 });
 
 test('Specifications cards rise from below in order and align when settled', async ({ page }) => {

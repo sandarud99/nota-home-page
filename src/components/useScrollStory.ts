@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
+import { attachHeroMotion } from '@/lib/hero-motion';
 
 export type Scene = 'specifications' | 'paper' | 'finishes';
 type Chapter = { trigger: ScrollTrigger; first: number; last: number; count: number };
@@ -111,6 +112,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
 
       const hero = select('.hero');
       const header = select('.site-header');
+      let detachHeroMotion: (() => void) | undefined;
       if (mobile) {
         gsap.set(header, { position: 'fixed' });
         gsap.timeline({
@@ -122,6 +124,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
         const heroStage = select('.hero-stage');
         const camera = select('.hero-camera');
         const travel = 2.54;
+        const wipeStart = 1.70;
         // Bring the specifications in at pin release, where the white panels fill the view.
         gsap.set(heroStage, { '--hero-overlap': 'calc(0px - var(--hero-height))' });
         const heroMotion = pin(hero, travel)
@@ -158,7 +161,11 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
           .set(header, { visibility: 'hidden' }, 1.74)
           .to(hero.querySelectorAll('.scene-wipe i'), {
             scaleY: 1, stagger: .081, duration: .41, ease: 'power1.inOut',
-          }, 1.70);
+          }, wipeStart);
+
+        const motion = hero.querySelector<HTMLElement>('.hero-motion');
+        const source = motion?.dataset.source;
+        if (motion && source) detachHeroMotion = attachHeroMotion(motion, source, heroMotion, wipeStart);
       }
 
       const specs = select('.spec-scene');
@@ -424,6 +431,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       updateProgress();
 
       return () => {
+        detachHeroMotion?.();
         specSection.style.removeProperty('scroll-margin-top');
         audience.style.removeProperty('scroll-margin-top');
         boxSection.style.removeProperty('scroll-margin-top');

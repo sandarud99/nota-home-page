@@ -10,7 +10,7 @@ module.exports = {
       populate: {
         brandMark: artwork,
         navigation: true,
-        hero: { populate: { ...artwork.populate, profileImage: image } },
+        hero: { populate: { ...artwork.populate, profileImage: image, animation: { fields: ['url'] } } },
         menuArtwork: artwork,
         specsHeading: true,
         specsArtwork: artwork,

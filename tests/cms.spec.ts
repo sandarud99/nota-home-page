@@ -19,7 +19,13 @@ type SeoDraft = Omit<HomepageSeo, 'ogImage' | 'twitterImage' | 'siteIcon'> & {
 type EditorLabels = { metadatas: Record<string, { edit: { label: string } }> };
 type HomepageDraft = {
   headerWordmark: string;
-  hero: { id: number; image: Asset; profileImage?: Asset | null };
+  hero: {
+    id: number;
+    image: Asset;
+    profileImage?: Asset | null;
+    animation?: Asset | null;
+    animationEnabled?: boolean;
+  };
   seo: SeoDraft;
   audienceHeading: { id: number; description: string | null };
 };
@@ -55,6 +61,7 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
     );
     expect(editor.contentType.metadatas.paperDetails.edit.label).toBe('Smartpaper chapters');
     expect(editor.components['shared.seo'].metadatas.structuredData.edit.label).toBe('Structured data (JSON-LD)');
+    expect(editor.components['shared.hero'].metadatas.animation.edit.label).toBe('Desktop Lottie animation');
     const original = await dataOf<HomepageDraft>(await cms.get(homepagePath, auth));
     const id = randomUUID().slice(0, 8);
     const uploaded = await cms.post('/upload', {
@@ -66,6 +73,15 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
     await expect(uploaded).toBeOK();
     const [asset] = await uploaded.json() as Asset[];
     const publicImage = new URL(asset.url, cmsUrl).href;
+    const uploadedAnimation = await cms.post('/upload', {
+      ...auth,
+      multipart: {
+        files: { name: `nota-motion-test-${id}.json`, mimeType: 'application/json', buffer: await readFile('public/animations/nota-pen.json') },
+      },
+    });
+    await expect(uploadedAnimation).toBeOK();
+    const [animation] = await uploadedAnimation.json() as Asset[];
+    const publicAnimation = new URL(animation.url, cmsUrl).href;
     const title = `Nōta editorial test ${id}`;
     const description = 'An audience description edited from Strapi.';
     const seo = {
@@ -100,7 +116,7 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
         ...auth,
         data: {
           headerWordmark: title,
-          hero: { id: original.hero.id, image: asset.id, profileImage: asset.id },
+          hero: { id: original.hero.id, image: asset.id, profileImage: asset.id, animation: animation.id, animationEnabled: true },
           seo: { id: original.seo.id, ...seo },
           audienceHeading: { id: original.audienceHeading.id, description },
         },
@@ -111,6 +127,8 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
       expect(draftOnly.headerWordmark).toBe(original.headerWordmark);
       expect(draftOnly.hero.image.url).toBe(original.hero.image.url);
       expect(draftOnly.hero.profileImage?.url).toBe(original.hero.profileImage?.url);
+      expect(draftOnly.hero.animation?.url).toBe(original.hero.animation?.url);
+      expect(draftOnly.hero.animationEnabled).toBe(original.hero.animationEnabled);
       expect(draftOnly.seo).toMatchObject({
         metaTitle: original.seo.metaTitle,
         canonicalUrl: original.seo.canonicalUrl,
@@ -127,6 +145,8 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
       await expect(page.locator('.hero-pen img')).toHaveJSProperty('complete', true);
       expect(await page.locator('.hero-pen img').evaluate(img => (img as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
       await expect(page.locator('.hero-profile[data-ready] img')).toHaveJSProperty('currentSrc', publicImage);
+      await expect(page.locator('.hero-motion')).toHaveAttribute('data-source', publicAnimation);
+      await expect(page.locator('.hero-motion')).toHaveAttribute('data-frame', '0');
       await expect(page.getByText(description)).toBeVisible();
       await expect(page.locator('link[rel="canonical"]')).toHaveJSProperty('href', seo.canonicalUrl);
       await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', publicImage);
@@ -162,6 +182,15 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
       const jsonLd = await page.locator('script[type="application/ld+json"]').textContent();
       expect(jsonLd).toContain('Nōta \\u003cStudio>');
       expect(JSON.parse(jsonLd ?? '')).toEqual(seo.structuredData);
+
+      await expect(await cms.put(homepagePath, {
+        ...auth,
+        data: { hero: { id: original.hero.id, animationEnabled: false } },
+      })).toBeOK();
+      await publish();
+      await page.reload();
+      await expect(page.locator('.hero-motion')).toHaveCount(0);
+      await expect(page.locator('.hero-camera')).toHaveCSS('opacity', '1');
     } finally {
       const current = await dataOf<HomepageDraft>(await cms.get(homepagePath, auth));
       const { ogImage, twitterImage, siteIcon, ...originalSeo } = original.seo;
@@ -173,6 +202,8 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
             id: current.hero.id,
             image: original.hero.image.id,
             profileImage: original.hero.profileImage?.id ?? null,
+            animation: original.hero.animation?.id ?? null,
+            animationEnabled: original.hero.animationEnabled ?? true,
           },
           seo: {
             ...originalSeo,
@@ -186,6 +217,7 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
       })).toBeOK();
       await publish();
       await expect(await cms.delete(`/upload/files/${asset.id}`, auth)).toBeOK();
+      await expect(await cms.delete(`/upload/files/${animation.id}`, auth)).toBeOK();
     }
 
     const inquiry = { name: 'Local Test', email: `nota-test-${id}@example.test`, message: 'Checking the locally published Nōta homepage.' };

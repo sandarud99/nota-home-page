@@ -11,8 +11,9 @@ module.exports = async function seedHomepage(strapi) {
   const byName = strapi.db.query('plugin::upload.file');
   const saved = new Map();
 
-  async function storeImage(url, alt) {
-    if (!/^\/images\/[a-z0-9-]+\.(webp|svg)$/.test(url)) throw new Error('Unexpected seed image path.');
+  async function storeMedia(url, alt) {
+    const isAnimation = url === '/animations/nota-pen.json';
+    if (!isAnimation && !/^\/images\/[a-z0-9-]+\.(webp|svg)$/.test(url)) throw new Error('Unexpected seed media path.');
     const name = basename(url);
     if (!saved.has(name)) {
       saved.set(name, (async () => {
@@ -22,11 +23,12 @@ module.exports = async function seedHomepage(strapi) {
           await access(join(strapi.dirs.static.public, 'uploads', basename(existing.url)));
           return existing.id;
         }
-        const filepath = join(root, 'public', 'images', name);
+        const filepath = join(root, 'public', url.slice(1));
         const { size } = await stat(filepath);
+        const mimetype = isAnimation ? 'application/json' : (name.endsWith('.svg') ? 'image/svg+xml' : 'image/webp');
         const [file] = await uploads.upload({
           data: { fileInfo: { name, alternativeText: alt || undefined } },
-          files: { filepath, originalFilename: name, mimetype: name.endsWith('.svg') ? 'image/svg+xml' : 'image/webp', size },
+          files: { filepath, originalFilename: name, mimetype, size },
         });
         return file.id;
       })());
@@ -42,10 +44,10 @@ module.exports = async function seedHomepage(strapi) {
     }
     if (!value || typeof value !== 'object') return value;
     const fields = {};
-    const mediaFields = { imageUrl: 'image', mobileImageUrl: 'mobileImage', hoverImageUrl: 'hoverImage', ogImageUrl: 'ogImage' };
+    const mediaFields = { imageUrl: 'image', mobileImageUrl: 'mobileImage', hoverImageUrl: 'hoverImage', ogImageUrl: 'ogImage', animationUrl: 'animation' };
     for (const [key, field] of Object.entries(value)) {
       if (key.endsWith('Width') || key.endsWith('Height')) continue;
-      if (mediaFields[key]) fields[mediaFields[key]] = await storeImage(field, key === 'hoverImageUrl' ? undefined : value.alt);
+      if (mediaFields[key]) fields[mediaFields[key]] = await storeMedia(field, key === 'hoverImageUrl' ? undefined : value.alt);
       else fields[key] = await withUploads(field);
     }
     return fields;

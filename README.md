@@ -21,7 +21,7 @@ In a second terminal, run `npm run dev`. Open [the homepage](http://127.0.0.1:30
 
 If port 5432 is already in use, publish the Docker database on 5433 by using `-p 127.0.0.1:5433:5432`, then run `DATABASE_URL=postgresql://nota@127.0.0.1:5433/nota npm run env:local`. To resume a stopped project database, run `docker start nota-postgres`.
 
-Strapi seeds an empty database with one published Homepage and 34 Media Library uploads on the first start. The seed reuses named uploads on retry and preserves any existing homepage draft or publication. Set `SEED_HOMEPAGE=false` after the initial publish if you want an empty database to require manual initialization. The shared seed inputs live in `src/content/homepage.ts` and `public/images`.
+Strapi seeds an empty database with one published Homepage and its Media Library uploads on the first start. The seed reuses named uploads on retry and preserves any existing homepage draft or publication. Set `SEED_HOMEPAGE=false` after the initial publish if you want an empty database to require manual initialization. The shared seed inputs live in `src/content/homepage.ts`, `public/images` and `public/animations`.
 
 For independent frontend development, run `CONTENT_SOURCE=local npm run dev`. CMS mode reads only published Strapi content. If the CMS is unavailable, the page shows a service error and the readiness endpoint returns 503.
 
@@ -67,6 +67,8 @@ Next.js 15 App Router and TypeScript provide server-side content loading, editab
 
 The desktop and mobile implementations share the same content. Responsive image sources preserve the mobile crops, and locally served Instrument Serif and DM Sans remove the runtime font CDN dependency.
 
+The desktop hero uses Lottie Web on canvas to render the original pen image sequence. ScrollTrigger selects the frame as the visitor scrolls through the pinned hero. [Original Lottie asset](https://nota.uprock.pro/f/0_refinedcover_03_09.json)
+
 ## Content model
 
 Content Manager exposes one **Homepage** single type with Draft & Publish and an **Inquiry** collection.
@@ -83,7 +85,7 @@ Content Manager exposes one **Homepage** single type with Draft & Publish and an
 
 Use **Content Manager → Homepage → Draft** to edit the labelled sections. Upload replacement artwork using the Media Library. Artwork has a main image, optional mobile image and editable alt text. Save the draft, then select **Publish** when it is ready to appear on the homepage. Next.js requests `GET /api/public-homepage` with its cache bypassed. Strapi explicitly populates the nested components and images and returns the published document.
 
-In **Hero**, the optional **Desktop full pen profile** image appears during the desktop pullback. Use a transparent side-on image with proportions close to 896 × 141. The seeded horizontal specification photograph supplies the full pen when the hero field is empty.
+In **Hero**, use **Desktop Lottie animation** to replace the default animation with a standalone Lottie JSON export containing embedded images. Turn off **Play desktop pen animation** to use the CMS hero photos. The optional **Desktop full pen profile** supplies the pullback when the animation is disabled or unavailable. Use a transparent side-on image with proportions close to 896 × 141. The seeded horizontal specification photo supplies the profile when that field is empty.
 
 In **Box contents**, the optional **Hover image** supplies the alternate photo on pointer hover and keyboard focus. The seeded Charging Adapter uses a full view of the adapter. Keep the alternate photo in the same proportions as the primary photo.
 
@@ -133,7 +135,7 @@ For the under-ten-minute recording, show the three Railway services, their deplo
 
 ## Trade-offs and follow-up
 
-The rebuild uses the permitted still imagery for the hero and macro shots, so their motion and lighting approximate the original’s rendered sequences. The mobile chapters include all four Smartpaper scenes and all five finishes in the vertical scroll, which makes the document longer than the reference on phones. The inquiry uses the assignment’s name, email and message fields.
+The macro shots use permitted still imagery with scroll and time-based motion. Mobile and reduced-motion visitors see the responsive hero photos. The mobile chapters include all four Smartpaper scenes and all five finishes in the vertical scroll, which makes the document longer than the reference on phones. The inquiry uses the assignment’s name, email and message fields.
 
 The local media provider and volume make deployment and backups straightforward for one CMS replica. A larger deployment could move uploads to object storage, use a shared rate limiter, and add visual regression baselines for additional browsers and physical devices.
 
