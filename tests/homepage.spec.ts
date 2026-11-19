@@ -18,10 +18,15 @@ async function readScroll(page: Page) {
   return page.evaluate(() => window.scrollY);
 }
 
-for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768], [1440, 900], [1920, 1080]]) {
+const viewports = [
+  [320, 640, true], [390, 844, true], [768, 1024, true], [952, 840, true],
+  [1024, 768, false], [1366, 1024, true], [1440, 900, false], [1920, 1080, false],
+] as const;
+
+for (const [width, height, touch] of viewports) {
   test(`real homepage at ${width}×${height}`, async ({ browser }) => {
-    const mobile = width < 768;
-    const context = await browser.newContext({ viewport: { width, height }, isMobile: mobile, hasTouch: mobile });
+    const compact = width <= 1024 || touch;
+    const context = await browser.newContext({ viewport: { width, height }, isMobile: touch, hasTouch: touch });
     try {
       const page = await context.newPage();
       const errors: string[] = [];
@@ -32,8 +37,8 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
       const response = await page.goto('/');
       expect(response?.status()).toBe(200);
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Smart pen\s+for real thinking/);
-      await expect(page.locator('.pin-spacer')).toHaveCount(width < 992 ? 4 : 6);
-      if (width < 992) await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible();
+      await expect(page.locator('.pin-spacer')).toHaveCount(compact ? 0 : 6);
+      if (compact) await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible();
       else await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
       const images = await page.locator('.artwork img').evaluateAll(async images => {
         await Promise.all(images.map(async image => {
@@ -49,17 +54,21 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
       const hero = page.locator('.hero');
       const camera = hero.locator('.hero-camera');
       const motion = hero.locator('.hero-motion');
-      if (width < 992) {
+      if (compact) {
         await expect(motion.locator('canvas')).toHaveCount(0);
+        await expect(page.locator('.page-progress')).toBeHidden();
         const start = (await camera.boundingBox())!.y;
         const header = page.getByRole('banner');
-        await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), Math.round(height * .12));
-        await expect.poll(async () => (await camera.boundingBox())!.y).toBeLessThan(start - 50);
+        const travel = height + 24;
+        await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), travel);
+        await expect.poll(async () => (await camera.boundingBox())!.y).toBeCloseTo(start - travel, 0);
         await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
-        await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), Math.round(height * .91));
-        await expect.poll(async () => (await header.boundingBox())!.y).toBeLessThan(-3);
-        await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
-        await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
+        for (const label of ['Writing System', 'Capture Technology', 'Digital Continuity']) {
+          await expect(page.getByRole('heading', { name: label })).toBeVisible();
+        }
+        await expect(page.getByRole('heading', { name: 'For the pen, it’s a precise map' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Graphite Black.' })).toBeVisible();
+        await expect(page.getByRole('contentinfo')).toHaveCSS('position', 'static');
       } else {
         await expect(motion).toHaveAttribute('data-frame', '0');
         await scrollInScene(hero, .3);
@@ -67,39 +76,39 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
         await expect.poll(async () => Number(await motion.getAttribute('data-frame'))).toBeGreaterThan(10);
         await scrollInScene(hero, 0);
         await expect(motion).toHaveAttribute('data-frame', '0');
+
+        const specs = page.locator('.spec-scene');
+        await scrollInScene(specs, .2);
+        await expectPinned(specs);
+
+        const paper = page.locator('#smartpaper');
+        const paperBounds = await scrollInScene(paper, .31);
+        await expectPinned(paper);
+        const paperControls = page.getByRole('group', { name: 'Smartpaper chapter' });
+        await expect(paperControls.locator('[aria-current]')).toHaveAccessibleName('For the pen, it’s a precise map');
+        const first = await readScroll(page);
+        await paperControls.getByRole('button', { name: 'For you, it’s just a blank sheet' }).click();
+        await expect(paperControls.locator('[aria-current]')).toHaveAccessibleName('For you, it’s just a blank sheet');
+        expect(await readScroll(page)).toBeGreaterThan(first);
+        await expectPinned(paper);
+        await paperControls.getByRole('button', { name: 'For the pen, it’s a precise map' }).click();
+        await expect(paperControls.locator('[aria-current]')).toHaveAccessibleName('For the pen, it’s a precise map');
+        await expect.poll(() => readScroll(page)).toBeLessThan(first + (paperBounds.end - paperBounds.start) * .08);
+
+        const finishes = page.locator('.finish-frame');
+        await scrollInScene(finishes, .18);
+        const finishControls = page.getByRole('group', { name: 'pen finish' });
+        await finishControls.getByRole('button', { name: 'Precision Red.' }).click();
+        await expect(finishControls.locator('[aria-current]')).toHaveAccessibleName('Precision Red.');
+        await expectPinned(finishes);
+        await finishControls.getByRole('button', { name: 'Mist Blue.' }).click();
+        await expect(finishControls.locator('[aria-current]')).toHaveAccessibleName('Mist Blue.');
+        await expectPinned(finishes);
       }
-
-      const specs = page.locator('.spec-scene');
-      await scrollInScene(specs, .2);
-      await expectPinned(specs);
-
-      const paper = page.locator(width < 992 ? '.paper-story' : '#smartpaper');
-      const paperBounds = await scrollInScene(paper, width < 992 ? .07 : .31);
-      await expectPinned(paper);
-      const paperControls = page.getByRole('group', { name: 'Smartpaper chapter' });
-      await expect(paperControls.locator('[aria-current]')).toHaveAccessibleName('For the pen, it’s a precise map');
-      const first = await readScroll(page);
-      await paperControls.getByRole('button', { name: 'For you, it’s just a blank sheet' }).click();
-      await expect(paperControls.locator('[aria-current]')).toHaveAccessibleName('For you, it’s just a blank sheet');
-      expect(await readScroll(page)).toBeGreaterThan(first);
-      await expectPinned(paper);
-      await paperControls.getByRole('button', { name: 'For the pen, it’s a precise map' }).click();
-      await expect(paperControls.locator('[aria-current]')).toHaveAccessibleName('For the pen, it’s a precise map');
-      await expect.poll(() => readScroll(page)).toBeLessThan(first + (paperBounds.end - paperBounds.start) * .08);
-
-      const finishes = page.locator('.finish-frame');
-      await scrollInScene(finishes, .18);
-      const finishControls = page.getByRole('group', { name: 'pen finish' });
-      await finishControls.getByRole('button', { name: 'Precision Red.' }).click();
-      await expect(finishControls.locator('[aria-current]')).toHaveAccessibleName('Precision Red.');
-      await expectPinned(finishes);
-      await finishControls.getByRole('button', { name: 'Mist Blue.' }).click();
-      await expect(finishControls.locator('[aria-current]')).toHaveAccessibleName('Mist Blue.');
-      await expectPinned(finishes);
 
       await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' }));
       await expect(page.getByRole('contentinfo')).toBeInViewport();
-      await expect.poll(() => page.locator('.page-progress').evaluate(el => Number((el as HTMLElement).style.getPropertyValue('--progress')))).toBe(1);
+      if (!compact) await expect.poll(() => page.locator('.page-progress').evaluate(el => Number((el as HTMLElement).style.getPropertyValue('--progress')))).toBe(1);
       expect(errors).toEqual([]);
     } finally {
       await context.close();
@@ -222,7 +231,7 @@ test('desktop Lottie frames, sliding menu and panel wipe follow the scroll in bo
   await expect(motion).toHaveAttribute('data-frame', '0');
   expect(await paintedFrame()).toBe(firstFrame);
 
-  await header.locator('a[href="#specifications"]').click();
+  await header.getByRole('link', { name: 'Specifications' }).click();
   await expect(page).toHaveURL(/#specifications$/);
   await expect(specHeading).toBeInViewport();
   await expect.poll(fade).toEqual({ title: 1, dividers: 0 });
@@ -232,7 +241,7 @@ test('desktop Lottie frames, sliding menu and panel wipe follow the scroll in bo
   })).toBe(true);
 
   await page.setViewportSize({ width: 768, height: 1024 });
-  await expect(page.locator('.pin-spacer')).toHaveCount(4);
+  await expect(page.locator('.pin-spacer')).toHaveCount(0);
   await expect(motion.locator('canvas')).toHaveCount(0);
   await expect(camera).toHaveCSS('opacity', '1');
   await expect(page.locator('.hero-stage')).toHaveCSS('margin-bottom', '0px');
@@ -397,7 +406,7 @@ test('the center-out split hands off to the pinned manifesto and audience fades'
   await expect.poll(widths).toEqual(early);
 
   await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
-  await page.locator('.site-header a[href="#who-its-for"]').click();
+  await page.getByRole('banner').getByRole('link', { name: "Who it's for" }).click();
   await expect(page).toHaveURL(/#who-its-for$/);
   await expect(audience).toBeInViewport();
   await expect(audience).toHaveCSS('opacity', '1');
@@ -933,45 +942,52 @@ test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page 
   await expect(header).not.toBeInViewport();
 });
 
-test('touch moves the document through a pinned finish and back', async ({ browser }) => {
+test('touch moves the page without advancing the finishes', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   try {
     const page = await context.newPage();
     await page.goto('/');
-    await expect(page.locator('.pin-spacer')).toHaveCount(4);
+    await expect(page.locator('.pin-spacer')).toHaveCount(0);
     const finishes = page.locator('.finish-frame');
     const header = page.getByRole('banner');
-    await scrollInScene(finishes, .03);
+    await finishes.evaluate(stage => scrollTo({ top: stage.getBoundingClientRect().top + scrollY - 70, behavior: 'instant' }));
     const controls = page.getByRole('group', { name: 'pen finish' });
+    const before = await readScroll(page);
     const input = await context.newCDPSession(page);
     await input.send('Input.synthesizeScrollGesture', { x: 195, y: 560, yDistance: -315, speed: 500, gestureSourceType: 'touch' });
+    await expect.poll(() => readScroll(page)).toBeGreaterThan(before + 100);
     await expect(controls.locator('[aria-current]')).toHaveAccessibleName('Graphite Black.');
-    await expectPinned(finishes);
-    await expect(header).not.toBeInViewport();
+    const after = await readScroll(page);
     await input.send('Input.synthesizeScrollGesture', { x: 195, y: 290, yDistance: 285, speed: 500, gestureSourceType: 'touch' });
-    await expect(controls.locator('[aria-current]')).toHaveAccessibleName('Impossible to');
+    await expect.poll(() => readScroll(page)).toBeLessThan(after - 100);
+    await expect(controls.locator('[aria-current]')).toHaveAccessibleName('Graphite Black.');
     await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
-    await header.getByRole('button', { name: 'Open navigation' }).tap();
-    await expect(header.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
+    const blue = controls.getByRole('button', { name: 'Mist Blue.' });
+    await blue.scrollIntoViewIfNeeded();
+    const beforeTap = await readScroll(page);
+    await blue.tap();
+    await expect(blue).toHaveAttribute('aria-current', 'step');
+    await expect(finishes.getByRole('heading', { name: 'Mist Blue.' })).toBeVisible();
+    expect(await readScroll(page)).toBe(beforeTap);
   } finally {
     await context.close();
   }
 });
 
 test('every pinned chapter selector brings its content into view', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
-  await expect(page.locator('.pin-spacer')).toHaveCount(4);
+  await expect(page.locator('.pin-spacer')).toHaveCount(6);
 
   const chapters = [
-    { stage: '.spec-scene', label: 'specification', count: 3 },
-    { stage: '.paper-story', label: 'Smartpaper chapter', count: 4 },
-    { stage: '.finish-frame', label: 'pen finish', count: 5 },
+    { stage: '.spec-scene', label: 'specification', count: 3, start: .63 },
+    { stage: '#smartpaper', label: 'Smartpaper chapter', count: 4, start: .32 },
+    { stage: '.finish-frame', label: 'pen finish', count: 5, start: .14 },
   ];
 
   for (const chapter of chapters) {
     const stage = page.locator(chapter.stage);
-    await scrollInScene(stage, .14);
+    await scrollInScene(stage, chapter.start);
     const controls = stage.getByRole('group', { name: chapter.label });
     const selectors = controls.locator('.scene-steps button');
     await expect(selectors).toHaveCount(chapter.count);
@@ -1036,7 +1052,7 @@ test('the last finish reveals the sticky footer and its links stay keyboard acce
   await expect(band).toBeInViewport({ ratio: .99 });
 
   await page.setViewportSize({ width: 812, height: 360 });
-  await expect(page.locator('.pin-spacer')).toHaveCount(4);
+  await expect(page.locator('.pin-spacer')).toHaveCount(0);
   await page.evaluate(() => (document.activeElement as HTMLElement).blur());
   await expect(footer).toHaveCSS('position', 'static');
   const revealStart = await page.locator('#main').evaluate(main => main.getBoundingClientRect().bottom + scrollY - innerHeight);
@@ -1048,12 +1064,20 @@ test('mobile navigation and the order dialog support keyboard focus', async ({ p
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   const menu = page.getByRole('button', { name: 'Open navigation' });
+  const panel = page.locator('.menu-panel');
+  await expect(panel).toHaveCSS('visibility', 'hidden');
+  expect(await panel.evaluate(element => element.getBoundingClientRect().y)).toBeLessThan(-800);
   await menu.click();
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
   await expect(nav).toBeVisible();
+  await expect(panel).toHaveCSS('transition-property', /transform/);
+  await expect.poll(async () => (await panel.boundingBox())!.y).toBe(0);
+  await expect(page.locator('#main')).toHaveAttribute('inert', '');
+  await expect.poll(() => panel.locator('img').evaluate(image => (image as HTMLImageElement).currentSrc)).toMatch(/order[-_]mobile/);
   await page.keyboard.press('Escape');
   await expect(nav).toBeHidden();
   await expect(menu).toBeFocused();
+  await expect(page.locator('#main')).not.toHaveAttribute('inert', '');
   await menu.click();
   await nav.getByRole('link', { name: 'Specifications' }).click();
   await expect(page).toHaveURL(/#specifications$/);
@@ -1078,8 +1102,37 @@ test('mobile navigation and the order dialog support keyboard focus', async ({ p
   await expect(order).toBeFocused();
 });
 
+test('tablet drawer uses the wide pen image and Smartpaper changes by selection', async ({ page }) => {
+  await page.setViewportSize({ width: 952, height: 840 });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open navigation' }).click();
+  const panel = page.locator('.menu-panel');
+  await expect.poll(async () => (await panel.boundingBox())!.y).toBe(0);
+  await expect.poll(() => panel.locator('img').evaluate(image => (image as HTMLImageElement).currentSrc)).toMatch(/order[-_]desktop/);
+  const order = panel.getByRole('button', { name: /Order Nota One/ });
+  await expect(order).toBeInViewport();
+  await order.click();
+  const dialog = page.getByRole('dialog', { name: 'Stay ahead' });
+  await expect(dialog.getByRole('textbox', { name: 'E-mail' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(order).toBeFocused();
+  await page.getByRole('button', { name: 'Close navigation' }).click();
+  await expect(panel).toHaveCSS('visibility', 'hidden');
+
+  const paper = page.locator('.paper-story');
+  const chapter = paper.getByRole('button', { name: 'AI-powered structure' });
+  await chapter.scrollIntoViewIfNeeded();
+  const before = await readScroll(page);
+  await chapter.click();
+  await expect(chapter).toHaveAttribute('aria-current', 'step');
+  await expect(paper.getByRole('heading', { name: 'AI-powered structure' })).toBeInViewport();
+  await expect(paper.getByRole('heading', { name: 'For the pen, it’s a precise map' })).toHaveCount(0);
+  expect(await readScroll(page)).toBe(before);
+});
+
 test('reduced motion exposes every chapter without pinning', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await expect(page.locator('.pin-spacer')).toHaveCount(0);
@@ -1091,9 +1144,12 @@ test('reduced motion exposes every chapter without pinning', async ({ page }) =>
   await expect(page.locator('.box-overview .highlight-letter').first()).toHaveCSS('opacity', '1');
   const figures = page.locator('.box-detail');
   for (const figure of await figures.all()) await expect(figure).toHaveCSS('opacity', '1');
-  for (const [index, clip] of [[1, 'inset(0px round 50% / 30%)'], [3, 'inset(0px round 26% / 16%)']] as const) {
+  for (const [index, clip] of [[1, 'inset(0px round 31% / 24%)'], [3, 'inset(0px round 29% / 50%)']] as const) {
     const figure = figures.nth(index);
     await expect(figure).toHaveCSS('clip-path', clip);
     await expect(figure.locator('.artwork img')).toHaveCSS('animation-name', 'none');
   }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Open navigation' }).click();
+  await expect(page.locator('.menu-panel')).toHaveCSS('transition-duration', '0s');
 });

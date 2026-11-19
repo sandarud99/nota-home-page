@@ -4,21 +4,24 @@ import { Fragment, useEffect, useRef, useState, type CSSProperties, type FormEve
 import { ArrowLeft, ArrowRight, Grip, X } from 'lucide-react';
 import { mediaUrl, safeHref } from '@/lib/strapi';
 import type { Artwork, BoxItemContent, FormCopy, Heading, Homepage } from '@/lib/strapi';
-import { useScrollStory } from './useScrollStory';
+import { compactPageQuery, desktopMotionQuery, useScrollStory } from './useScrollStory';
 
-function ImageView({ artwork, className = '', eager = false, fallback }: {
+const phoneImageQuery = '(width < 600px)';
+
+function ImageView({ artwork, className = '', eager = false, fallback, mobileMedia = compactPageQuery }: {
   artwork: Artwork;
   className?: string;
   eager?: boolean;
   fallback?: string;
+  mobileMedia?: string | false;
 }) {
   const source = mediaUrl(artwork.image, artwork.imageUrl);
   const mobile = mediaUrl(artwork.mobileImage, artwork.mobileImageUrl);
   const [failed, setFailed] = useState<string[]>([]);
   const image = source && !failed.includes(source) ? source : fallback;
-  const mobileSource = mobile && !failed.includes(mobile) ? mobile : undefined;
+  const mobileSource = mobileMedia && mobile && !failed.includes(mobile) ? mobile : undefined;
   return <picture className={`artwork ${className}`}>
-    {mobileSource && <source media="(width < 992px)" srcSet={mobileSource}
+    {mobileSource && mobileMedia && <source media={mobileMedia} srcSet={mobileSource}
       width={artwork.mobileImage?.width ?? artwork.mobileImageWidth}
       height={artwork.mobileImage?.height ?? artwork.mobileImageHeight} />}
     <img
@@ -179,11 +182,15 @@ function InquiryModal({ copy, close }: { copy: FormCopy; close: () => void }) {
   </dialog>;
 }
 
-function BoxItem({ item, className = '' }: { item: BoxItemContent; className?: string }) {
+function BoxItem({ item, className = '', mobileMedia = false }: {
+  item: BoxItemContent;
+  className?: string;
+  mobileMedia?: string | false;
+}) {
   const alternate = item.hoverImage || item.hoverImageUrl;
   return <article className={`box-item ${className}`} tabIndex={alternate ? 0 : undefined}>
     <div className="box-item-artwork">
-      <ImageView artwork={item} fallback="/art/notebook.svg" />
+      <ImageView artwork={item} mobileMedia={mobileMedia} fallback="/art/notebook.svg" />
       {alternate && <ImageView artwork={{ image: item.hoverImage, imageUrl: item.hoverImageUrl, alt: '' }}
         className="box-item-alternate" />}
     </div>
@@ -196,7 +203,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
   const menuButton = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [inquiryOpen, setInquiryOpen] = useState(false);
-  const { active, goToScene, setScrollLocked } = useScrollStory(page);
+  const { active, goToScene, setScrollLocked } = useScrollStory(page, d.colors.length > 1 ? 1 : 0);
   const orderLabel = `${d.hero.ctaLabel} ${d.hero.priceLabel} • ${d.hero.price}`;
   const uploadedProfile = mediaUrl(d.hero.profileImage);
   const specImage = d.specsArtwork.mobileImage;
@@ -209,10 +216,10 @@ export default function Experience({ data: d }: { data: Homepage }) {
     : mediaUrl(d.hero.animation, d.hero.animationUrl ?? '/animations/nota-pen.json');
 
   useEffect(() => {
-    const desktop = window.matchMedia('(min-width: 992px)');
-    const closeAtDesktop = () => { if (desktop.matches) setMenuOpen(false); };
-    desktop.addEventListener('change', closeAtDesktop);
-    return () => desktop.removeEventListener('change', closeAtDesktop);
+    const compact = window.matchMedia(compactPageQuery);
+    const closeAtDesktop = () => { if (!compact.matches) setMenuOpen(false); };
+    compact.addEventListener('change', closeAtDesktop);
+    return () => compact.removeEventListener('change', closeAtDesktop);
   }, []);
 
   function openInquiry() {
@@ -226,9 +233,11 @@ export default function Experience({ data: d }: { data: Homepage }) {
   }
 
   const orderText = <>{d.hero.ctaLabel} <span>{d.hero.priceLabel}</span><i aria-hidden="true">•</i>{d.hero.price}</>;
+  const navigationLinks = d.navigation.map((link, i) => <a href={safeHref(link.href)} key={link.id ?? i}
+    onClick={() => setMenuOpen(false)}>{link.label}</a>);
 
   return <div ref={page}>
-    <a className="skip-link" href="#main">Skip to content</a>
+    <a className="skip-link" href="#main" inert={menuOpen}>Skip to content</a>
     <div className="page-progress" aria-hidden="true"><i /></div>
     <header className={`site-header ${menuOpen ? 'menu-open' : ''}`}
       onKeyDown={event => {
@@ -239,20 +248,22 @@ export default function Experience({ data: d }: { data: Homepage }) {
         }
       }}>
       <a className="brand" href="#top" aria-label={`${d.brand} home`} onClick={() => setMenuOpen(false)}>{d.headerWordmark}</a>
+      <nav className="header-navigation" aria-label="Main navigation">{navigationLinks}</nav>
       <button className="mobile-toggle" ref={menuButton} type="button"
         aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
         aria-controls="homepage-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>
         {menuOpen ? <X size={30} aria-hidden="true" /> : <Grip size={28} aria-hidden="true" />}
       </button>
-      <div className="menu-panel" id="homepage-navigation" data-lenis-prevent={menuOpen || undefined}>
-        <nav aria-label="Main navigation">
-          {d.navigation.map((link, i) => <a href={safeHref(link.href)} key={link.id ?? i} onClick={() => setMenuOpen(false)}>{link.label}</a>)}
-        </nav>
+      <div className="menu-panel" id="homepage-navigation" inert={!menuOpen}>
+        <nav className="header-navigation" aria-label="Main navigation">{navigationLinks}</nav>
         <div className="menu-product">
-          <ImageView artwork={d.menuArtwork} />
+          <ImageView artwork={d.menuArtwork} mobileMedia={phoneImageQuery} />
           <button type="button" className="order-button" onClick={openInquiry}>{orderText}</button>
         </div>
-        <div className="menu-credits"><span>{d.footerCopyright}</span><span>{d.footerCredit}</span></div>
+        <div className="menu-credits">
+          <span>{d.footerCopyright}</span>
+          <div><p>{d.footerProject}</p><p>{d.footerCredit}</p></div>
+        </div>
       </div>
       <div className="header-order">
         <ImageView artwork={d.brandMark} className="brand-mark" eager />
@@ -262,12 +273,12 @@ export default function Experience({ data: d }: { data: Homepage }) {
         <ImageView artwork={d.brandMark} className="brand-mark" eager />
       </button>
     </header>
-    <main id="main" tabIndex={-1}>
+    <main id="main" tabIndex={-1} inert={menuOpen}>
       <div id="top" className="hero-stage">
         <section className="hero" aria-labelledby="hero-heading">
           <div className="hero-camera">
             {heroProfile && <picture key={heroProfile} className={`hero-profile${uploadedProfile ? '' : ' hero-profile--spec'}`}>
-              <source media="(min-width: 992px) and (prefers-reduced-motion: no-preference)" srcSet={heroProfile} />
+              <source media={desktopMotionQuery} srcSet={heroProfile} />
               <img alt="" loading="lazy" decoding="async"
                 ref={image => {
                   if (image?.complete && image.naturalWidth) image.parentElement?.setAttribute('data-ready', '');
@@ -287,7 +298,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
         <div className="spec-scene">
           <Wipe panels={wipeColumns} className="spec-intro-lines" />
           <SectionTitle id="specs-heading" heading={d.specsHeading} />
-          <ImageView artwork={d.specsArtwork} className="spec-pen" fallback="/art/pen-transparent.svg" />
+          <ImageView artwork={d.specsArtwork} className="spec-pen" mobileMedia={phoneImageQuery} fallback="/art/pen-transparent.svg" />
           <div className="spec-cards">
             {d.specifications.map((item, i) => <article className="spec-card" key={item.id ?? i}>
               <h3>{item.title}</h3>
@@ -322,15 +333,15 @@ export default function Experience({ data: d }: { data: Homepage }) {
           </div>
         </div>
         <section id="about" className="about-visual" aria-label={d.aboutArtwork.alt}>
-          <div className="about-panel"><ImageView artwork={d.aboutArtwork} fallback="/art/pen-transparent.svg" /></div>
+          <div className="about-panel"><ImageView artwork={d.aboutArtwork} mobileMedia={false} fallback="/art/pen-transparent.svg" /></div>
         </section>
       </div>
 
       <section id="smartpaper" aria-labelledby="paper-heading">
         <SectionTitle id="paper-heading" heading={d.paperHeading} />
         <div className="paper-story">
-          {d.paperDetails.map((item, i) => <article className="chapter-slide paper-slide" key={item.id ?? i}>
-            <ImageView artwork={item} fallback="/art/notebook.svg" />
+          {d.paperDetails.map((item, i) => <article className="chapter-slide paper-slide" key={item.id ?? i} data-current={i === active.paper || undefined}>
+            <ImageView artwork={item} mobileMedia={phoneImageQuery} fallback="/art/notebook.svg" />
             <h3 className="chapter-copy paper-title">{item.title}</h3>
             <div className="chapter-copy paper-caption">
               <h4>{item.caption}</h4>
@@ -348,7 +359,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
           <SectionTitle id="box-heading" heading={d.boxHeading} />
         </div>
         <div className="box-contents">
-          <BoxItem item={d.boxSet} className="box-set" />
+          <BoxItem item={d.boxSet} className="box-set" mobileMedia={compactPageQuery} />
           <p className="box-overview"><HighlightText text={d.boxProductOverview} /></p>
           <div className="box-items">{d.boxItems.map((item, i) => <BoxItem key={item.id ?? i} item={item} />)}</div>
         </div>
@@ -365,7 +376,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
         <h2 className="sr-only" id="finishes-heading">{d.colorsHeading.title}</h2>
         {d.colorsHeading.description && <p className="sr-only" id="finishes-description">{d.colorsHeading.description}</p>}
         <div className="finish-frame">
-          {d.colors.map((color, i) => <article key={color.id ?? i}
+          {d.colors.map((color, i) => <article key={color.id ?? i} data-current={i === active.finishes || undefined}
             className={`chapter-slide finish-slide ${color.darkText ? 'dark-text' : ''}`}
             style={{ '--scene-tone': /^#[0-9a-f]{6}$/i.test(color.tone) ? color.tone : '#303139' } as CSSProperties}>
             <ImageView artwork={color} fallback="/art/pen-transparent.svg" />
@@ -379,7 +390,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
       </section>
     </main>
 
-    <footer className="footer">
+    <footer className="footer" inert={menuOpen}>
       <div className="footer-main">
         <p>{d.footerDescription}</p>
         <nav aria-label="Footer navigation">
@@ -390,7 +401,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
       </div>
       <div className="footer-credits"><span>{d.footerCopyright}</span><span>{d.footerProject}</span><span>{d.footerCredit}</span></div>
     </footer>
-    <div className="footer-brand">
+    <div className="footer-brand" inert={menuOpen}>
       <ImageView artwork={{ ...d.brandMark, alt: '' }} />
       <span>{d.brand}</span>
     </div>

@@ -27,7 +27,7 @@ For independent frontend development, run `CONTENT_SOURCE=local npm run dev`. CM
 
 ## Check the local project
 
-1. Open the homepage, scroll through the product chapters, then scroll back to see the animations reverse. Try the finish selectors and use the browser’s device toolbar to check a phone viewport. [Local homepage](http://127.0.0.1:3000/)
+1. On desktop, scroll through the product chapters and back to see the animations reverse. At a tablet or phone size, open the menu using the middle dots and tap the Smartpaper and finish selectors to change images. [Local homepage](http://127.0.0.1:3000/)
 2. Sign in with your local Strapi admin account. Open **Content Manager → Homepage**, then select **Draft** to edit the content. [Local Strapi admin](http://127.0.0.1:1337/admin)
 3. To verify the form, use the homepage’s order button and send a test message with a test email such as `nota-check@example.test`. Open **Content Manager → Inquiry** in Strapi to see the saved message.
 
@@ -63,7 +63,7 @@ The assignment requires `noindex, nofollow` on the homepage. Next.js sets those 
 
 ## Why this stack
 
-Next.js 15 App Router and TypeScript provide server-side content loading, editable metadata, and a same-origin inquiry endpoint. Strapi 5.62 and PostgreSQL handle editing, publication and form persistence. The application retains V3’s GSAP ScrollTrigger and Lenis stack. GSAP timelines follow document scroll, while scene buttons move the document to the matching position. Native touch scrolling uses the same timeline. The reduced-motion layout presents every chapter in document order.
+Next.js 15 App Router and TypeScript provide server-side content loading, editable metadata, and a same-origin inquiry endpoint. Strapi 5.62 and PostgreSQL handle editing, publication and form persistence. On desktop, the GSAP ScrollTrigger and Lenis stack synchronizes timelines and scene controls with document scroll. Tablet and phone layouts use native scrolling, a top drawer, and manually selected Smartpaper and finish slides. Desktop visitors using reduced motion can read every chapter in document order.
 
 The desktop and mobile implementations share the same content. Responsive image sources preserve the mobile crops, and locally served Instrument Serif and DM Sans remove the runtime font CDN dependency.
 
@@ -102,7 +102,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The Playwright suite covers 320×640, 390×844, 768×1024, 1024×768, 1440×900 and 1920×1080. It checks image decoding, overflow, scroll pins, every scene selector, reversing via wheel and touch, keyboard focus, and reduced motion. With an existing production build running, use `TEST_BASE_URL=http://127.0.0.1:3000 npm run test:e2e`. Setting `PLAYWRIGHT_CHANNEL=chrome` uses installed Google Chrome.
+The Playwright suite covers 320×640, 390×844, 768×1024, 952×840, 1024×768, 1366×1024, 1440×900 and 1920×1080. It checks image decoding, overflow, desktop pins and wheel reversal, native touch scrolling, drawer controls, scene selectors, keyboard focus, and reduced motion. With an existing production build running, use `TEST_BASE_URL=http://127.0.0.1:3000 npm run test:e2e`. Setting `PLAYWRIGHT_CHANNEL=chrome` uses installed Google Chrome.
 
 The CMS workflow test exercises editor labels, draft isolation, a real media upload, published browser metadata and JSON-LD, and a persisted inquiry from `localhost`. Use a disposable PostgreSQL database for it. Start Strapi with that database’s `DATABASE_URL` and a temporary `STRAPI_PUBLIC_DIR` containing an empty `uploads/` directory. Point the running frontend at that Strapi instance. Set `TEST_CMS_ADMIN_PASSWORD` to a strong password for the synthetic test account, then run the command below. The test restores the original homepage after publishing the test edit.
 
@@ -135,7 +135,7 @@ For the under-ten-minute recording, show the three Railway services, their deplo
 
 ## Trade-offs and follow-up
 
-The macro shots use permitted still imagery with scroll and time-based motion. Mobile and reduced-motion visitors see the responsive hero photos. The mobile chapters include all four Smartpaper scenes and all five finishes in the vertical scroll, which makes the document longer than the reference on phones. The inquiry uses the assignment’s name, email and message fields.
+The macro shots use permitted still imagery with desktop scroll motion and time-based zooms. Tablet, phone and reduced-motion visitors see the responsive hero photos. Tablet and phone visitors can browse all four Smartpaper scenes and all five finishes using the chapter controls. The inquiry uses the assignment’s name, email and message fields.
 
 The local media provider and volume make deployment and backups straightforward for one CMS replica. A larger deployment could move uploads to object storage, use a shared rate limiter, and add visual regression baselines for additional browsers and physical devices.
 
