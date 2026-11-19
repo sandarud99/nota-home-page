@@ -26,6 +26,8 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>, initialFi
     const progress = select('.page-progress');
     const hero = select('.hero');
     const header = select('.site-header');
+    const wordmark = select('.site-header .brand');
+    const main = select('#main');
     const specSection = select('#specifications');
     const audience = select('#who-its-for');
     const about = select('#about');
@@ -41,7 +43,27 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>, initialFi
     let headerExit = headerExitPosition();
     let previousHeaderScroll = 0;
 
+    const updateHeaderColor = () => {
+      if (header.classList.contains('menu-open')) return;
+      // The rendered scene at the wordmark can differ from the document position during a pin.
+      const x = wordmark.offsetLeft + 4;
+      const y = wordmark.offsetTop + wordmark.offsetHeight / 2;
+      const surface = document.elementsFromPoint(x, y).find(element => main.contains(element));
+      const aboutPanel = surface?.closest('.about-panel');
+      let light = Boolean(surface?.closest('.spec-scene, #smartpaper > .section-title, .box-intro .section-title, .box-contents, .finish-slide.dark-text'));
+      if (aboutPanel) light = Number(getComputedStyle(aboutPanel).opacity) >= .5;
+
+      // The decorative panels are excluded from hit testing.
+      const wipe = surface?.closest('.hero, .spec-scene, .paper-story')
+        ?.querySelector('.scene-wipe i, .spec-exit-wipe i');
+      if (wipe) {
+        const { left, right, top, bottom } = wipe.getBoundingClientRect();
+        if (x >= left && x < right && y >= top && y < bottom) light = !wipe.closest('.spec-exit-wipe');
+      }
+      header.toggleAttribute('data-light-surface', light);
+    };
     const updateScroll = () => {
+      updateHeaderColor();
       if (compact.matches) return;
       const scroller = document.scrollingElement!;
       const distance = scroller.scrollHeight - scroller.clientHeight;
@@ -51,7 +73,6 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>, initialFi
 
       const pastHero = scroll > headerExit;
       const movement = scroll - previousHeaderScroll;
-      header.toggleAttribute('data-past-hero', pastHero);
       if (!pastHero || Math.abs(movement) >= 8) {
         header.toggleAttribute('data-hidden', pastHero && movement > 0);
         previousHeaderScroll = scroll;
@@ -62,7 +83,6 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>, initialFi
       footer.toggleAttribute('data-sticky', pinnedHero.matches && footer.offsetHeight <= window.innerHeight);
       if (compact.matches) {
         header.removeAttribute('data-hidden');
-        header.removeAttribute('data-past-hero');
         previousHeaderScroll = window.scrollY;
       }
       updateScroll();
@@ -443,7 +463,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>, initialFi
       ScrollTrigger.removeEventListener('refresh', updateViewport);
       media.revert();
       header.removeAttribute('data-hidden');
-      header.removeAttribute('data-past-hero');
+      header.removeAttribute('data-light-surface');
       footer.removeAttribute('data-sticky');
     };
   }, [root]);

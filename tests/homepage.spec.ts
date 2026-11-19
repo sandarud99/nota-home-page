@@ -59,10 +59,12 @@ for (const [width, height, touch] of viewports) {
         await expect(page.locator('.page-progress')).toBeHidden();
         const start = (await camera.boundingBox())!.y;
         const header = page.getByRole('banner');
+        await expect(header).toHaveCSS('background-image', 'none');
         const travel = height + 24;
         await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), travel);
         await expect.poll(async () => (await camera.boundingBox())!.y).toBeCloseTo(start - travel, 0);
         await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
+        await expect(header).toHaveCSS('color', 'rgb(8, 8, 8)');
         for (const label of ['Writing System', 'Capture Technology', 'Digital Continuity']) {
           await expect(page.getByRole('heading', { name: label })).toBeVisible();
         }
@@ -220,6 +222,10 @@ test('desktop Lottie frames, sliding menu and panel wipe follow the scroll in bo
 
   await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), end + 25);
   await expect.poll(fade).toEqual(faint);
+  await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
+  await expect(header).toHaveCSS('background-image', 'none');
+  await expect(header).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await expect(header).toHaveCSS('color', 'rgb(8, 8, 8)');
 
   await scrollInScene(hero, .60);
   await expect(header).toBeVisible();
@@ -938,6 +944,7 @@ test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page 
   await expect(controls.locator('[aria-current]')).toHaveAccessibleName('For the pen, it’s a precise map');
   await expectPinned(paper);
   await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
+  await expect(header).toHaveCSS('color', 'rgb(255, 255, 255)');
   await page.mouse.wheel(0, 180);
   await expect(header).not.toBeInViewport();
 });
