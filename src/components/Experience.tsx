@@ -230,6 +230,38 @@ export default function Experience({ data: d }: { data: Homepage }) {
   return <div ref={page}>
     <a className="skip-link" href="#main">Skip to content</a>
     <div className="page-progress" aria-hidden="true"><i /></div>
+    <header className={`site-header ${menuOpen ? 'menu-open' : ''}`}
+      onKeyDown={event => {
+        if (event.key === 'Escape' && menuOpen && !inquiryOpen) {
+          event.preventDefault();
+          setMenuOpen(false);
+          requestAnimationFrame(() => menuButton.current?.focus({ preventScroll: true }));
+        }
+      }}>
+      <a className="brand" href="#top" aria-label={`${d.brand} home`} onClick={() => setMenuOpen(false)}>{d.headerWordmark}</a>
+      <button className="mobile-toggle" ref={menuButton} type="button"
+        aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
+        aria-controls="homepage-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>
+        {menuOpen ? <X size={30} aria-hidden="true" /> : <Grip size={28} aria-hidden="true" />}
+      </button>
+      <div className="menu-panel" id="homepage-navigation" data-lenis-prevent={menuOpen || undefined}>
+        <nav aria-label="Main navigation">
+          {d.navigation.map((link, i) => <a href={safeHref(link.href)} key={link.id ?? i} onClick={() => setMenuOpen(false)}>{link.label}</a>)}
+        </nav>
+        <div className="menu-product">
+          <ImageView artwork={d.menuArtwork} />
+          <button type="button" className="order-button" onClick={openInquiry}>{orderText}</button>
+        </div>
+        <div className="menu-credits"><span>{d.footerCopyright}</span><span>{d.footerCredit}</span></div>
+      </div>
+      <div className="header-order">
+        <ImageView artwork={d.brandMark} className="brand-mark" eager />
+        <button type="button" className="order-button" aria-label={orderLabel} onClick={openInquiry}>{orderText}</button>
+      </div>
+      <button type="button" className="mobile-order" aria-label={orderLabel} onClick={openInquiry}>
+        <ImageView artwork={d.brandMark} className="brand-mark" eager />
+      </button>
+    </header>
     <main id="main" tabIndex={-1}>
       <div id="top" className="hero-stage">
         <section className="hero" aria-labelledby="hero-heading">
@@ -246,38 +278,6 @@ export default function Experience({ data: d }: { data: Homepage }) {
             <ImageView artwork={d.hero} className="hero-pen" fallback="/art/hero-pen.svg" eager />
           </div>
           {heroAnimation && <div className="hero-motion" data-source={heroAnimation} aria-hidden="true" />}
-          <header className={`site-header ${menuOpen ? 'menu-open' : ''}`}
-            onKeyDown={event => {
-              if (event.key === 'Escape' && menuOpen && !inquiryOpen) {
-                event.preventDefault();
-                setMenuOpen(false);
-                requestAnimationFrame(() => menuButton.current?.focus({ preventScroll: true }));
-              }
-            }}>
-            <a className="brand" href="#top" aria-label={`${d.brand} home`} onClick={() => setMenuOpen(false)}>{d.headerWordmark}</a>
-            <button className="mobile-toggle" ref={menuButton} type="button"
-              aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
-              aria-controls="homepage-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>
-              {menuOpen ? <X size={30} aria-hidden="true" /> : <Grip size={28} aria-hidden="true" />}
-            </button>
-            <div className="menu-panel" id="homepage-navigation" data-lenis-prevent={menuOpen || undefined}>
-              <nav aria-label="Main navigation">
-                {d.navigation.map((link, i) => <a href={safeHref(link.href)} key={link.id ?? i} onClick={() => setMenuOpen(false)}>{link.label}</a>)}
-              </nav>
-              <div className="menu-product">
-                <ImageView artwork={d.menuArtwork} />
-                <button type="button" className="order-button" onClick={openInquiry}>{orderText}</button>
-              </div>
-              <div className="menu-credits"><span>{d.footerCopyright}</span><span>{d.footerCredit}</span></div>
-            </div>
-            <div className="header-order">
-              <ImageView artwork={d.brandMark} className="brand-mark" eager />
-              <button type="button" className="order-button" aria-label={orderLabel} onClick={openInquiry}>{orderText}</button>
-            </div>
-            <button type="button" className="mobile-order" aria-label={orderLabel} onClick={openInquiry}>
-              <ImageView artwork={d.brandMark} className="brand-mark" eager />
-            </button>
-          </header>
           <h1 id="hero-heading" className="hero-title">{d.hero.title}</h1>
           <Wipe panels={wipeColumns} />
         </section>

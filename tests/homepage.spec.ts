@@ -52,7 +52,7 @@ for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1024, 768],
       if (width < 992) {
         await expect(motion.locator('canvas')).toHaveCount(0);
         const start = (await camera.boundingBox())!.y;
-        const header = hero.locator('.site-header');
+        const header = page.getByRole('banner');
         await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), Math.round(height * .12));
         await expect.poll(async () => (await camera.boundingBox())!.y).toBeLessThan(start - 50);
         await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
@@ -114,7 +114,7 @@ test('desktop Lottie frames, sliding menu and panel wipe follow the scroll in bo
   const hero = page.locator('.hero');
   const camera = hero.locator('.hero-camera');
   const motion = hero.locator('.hero-motion');
-  const header = hero.locator('.site-header');
+  const header = page.getByRole('banner');
   const panels = hero.locator('.scene-wipe i');
   await expect(motion).toHaveAttribute('data-frame', '0');
   await expect(camera).toHaveCSS('opacity', '0');
@@ -122,13 +122,24 @@ test('desktop Lottie frames, sliding menu and panel wipe follow the scroll in bo
 
   const orderCard = header.locator('.header-order');
   const orderButton = orderCard.getByRole('button');
-  const hoverFill = 'rgb(153, 20, 0)';
+  const hoverFill = 'rgb(255, 34, 0)';
   await expect(orderButton).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   await orderCard.locator('.brand-mark').hover();
   await expect(orderButton).toHaveCSS('background-color', hoverFill);
   await page.mouse.move(735, 380);
   await expect(orderButton).toHaveCSS('background-color', 'rgb(0, 0, 0)');
-  await header.getByRole('navigation', { name: 'Main navigation' }).getByRole('link').last().focus();
+  const links = header.getByRole('navigation', { name: 'Main navigation' }).getByRole('link');
+  const underline = () => links.first().evaluate(link => {
+    const style = getComputedStyle(link, '::after');
+    return { scale: new DOMMatrixReadOnly(style.transform).a, duration: Number.parseFloat(style.transitionDuration) };
+  });
+  expect((await underline()).scale).toBe(0);
+  await links.first().hover();
+  await expect.poll(async () => (await underline()).scale).toBe(1);
+  expect((await underline()).duration).toBeGreaterThan(0);
+  await page.mouse.move(735, 380);
+  await expect.poll(async () => (await underline()).scale).toBe(0);
+  await links.last().focus();
   await page.keyboard.press('Tab');
   await expect(orderButton).toBeFocused();
   await expect(orderButton).toHaveCSS('background-color', hoverFill);
@@ -159,7 +170,7 @@ test('desktop Lottie frames, sliding menu and panel wipe follow the scroll in bo
   await expect.poll(async () => (await header.boundingBox())!.y).toBeLessThan(-20);
   await expect(header).toHaveCSS('opacity', '1');
   const { end } = await scrollInScene(hero, .84);
-  await expect(header).toBeHidden();
+  await expect(header).not.toBeInViewport();
   await expectPinned(hero);
   await expect(motion).toHaveAttribute('data-frame', '75');
   const heights = () => panels.evaluateAll(columns => columns.map(column => column.getBoundingClientRect().height));
@@ -903,6 +914,7 @@ test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page 
   await page.goto('/');
   await expect(page.locator('.pin-spacer')).toHaveCount(6);
   const paper = page.locator('#smartpaper');
+  const header = page.getByRole('banner');
   await scrollInScene(paper, .32);
   await expectPinned(paper);
   const controls = page.getByRole('group', { name: 'Smartpaper chapter' });
@@ -911,10 +923,14 @@ test('wheel advances and rewinds the pinned Smartpaper sequence', async ({ page 
   await page.mouse.wheel(0, 730);
   await expect(controls.locator('[aria-current]')).toHaveAccessibleName('For you, it’s just a blank sheet');
   await expectPinned(paper);
+  await expect(header).not.toBeInViewport();
   await expect(page.locator('html')).not.toHaveClass(/lenis-smooth/);
   await page.mouse.wheel(0, -730);
   await expect(controls.locator('[aria-current]')).toHaveAccessibleName('For the pen, it’s a precise map');
   await expectPinned(paper);
+  await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
+  await page.mouse.wheel(0, 180);
+  await expect(header).not.toBeInViewport();
 });
 
 test('touch moves the document through a pinned finish and back', async ({ browser }) => {
@@ -924,14 +940,19 @@ test('touch moves the document through a pinned finish and back', async ({ brows
     await page.goto('/');
     await expect(page.locator('.pin-spacer')).toHaveCount(4);
     const finishes = page.locator('.finish-frame');
+    const header = page.getByRole('banner');
     await scrollInScene(finishes, .03);
     const controls = page.getByRole('group', { name: 'pen finish' });
     const input = await context.newCDPSession(page);
     await input.send('Input.synthesizeScrollGesture', { x: 195, y: 560, yDistance: -315, speed: 500, gestureSourceType: 'touch' });
     await expect(controls.locator('[aria-current]')).toHaveAccessibleName('Graphite Black.');
     await expectPinned(finishes);
+    await expect(header).not.toBeInViewport();
     await input.send('Input.synthesizeScrollGesture', { x: 195, y: 290, yDistance: 285, speed: 500, gestureSourceType: 'touch' });
     await expect(controls.locator('[aria-current]')).toHaveAccessibleName('Impossible to');
+    await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
+    await header.getByRole('button', { name: 'Open navigation' }).tap();
+    await expect(header.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
   } finally {
     await context.close();
   }

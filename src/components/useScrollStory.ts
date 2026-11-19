@@ -21,23 +21,43 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
 
     const select = (selector: string) => page.querySelector<HTMLElement>(selector)!;
     const progress = select('.page-progress');
+    const hero = select('.hero');
+    const header = select('.site-header');
     const specSection = select('#specifications');
     const audience = select('#who-its-for');
     const about = select('#about');
     const smartpaper = select('#smartpaper');
     const boxSection = select('#inside-the-box');
     const footer = select('.footer');
-    const updateProgress = () => {
+    const pinnedHero = window.matchMedia('(min-width: 992px) and (prefers-reduced-motion: no-preference)');
+    // Keep the header visible through the hero's pen pullback.
+    const headerExitPosition = () => pinnedHero.matches
+      ? hero.offsetHeight * 1.57
+      : hero.offsetHeight - window.innerHeight * .18;
+    let headerExit = headerExitPosition();
+    let previousHeaderScroll = 0;
+
+    const updateScroll = () => {
       const scroller = document.scrollingElement!;
       const distance = scroller.scrollHeight - scroller.clientHeight;
-      const ratio = distance > 0 ? gsap.utils.clamp(0, 1, window.scrollY / distance) : 0;
+      const scroll = distance > 0 ? gsap.utils.clamp(0, distance, window.scrollY) : 0;
+      const ratio = distance > 0 ? scroll / distance : 0;
       progress.style.setProperty('--progress', String(ratio));
+
+      const pastHero = scroll > headerExit;
+      const movement = scroll - previousHeaderScroll;
+      header.toggleAttribute('data-past-hero', pastHero);
+      if (!pastHero || Math.abs(movement) >= 8) {
+        header.toggleAttribute('data-hidden', pastHero && movement > 0);
+        previousHeaderScroll = scroll;
+      }
     };
     const updateViewport = () => {
+      headerExit = headerExitPosition();
       footer.toggleAttribute('data-sticky', footer.offsetHeight <= window.innerHeight);
-      updateProgress();
+      updateScroll();
     };
-    window.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('scroll', updateScroll, { passive: true });
     ScrollTrigger.addEventListener('refresh', updateViewport);
 
     const media = gsap.matchMedia(page);
@@ -55,7 +75,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
           if (top > window.scrollY) window.scrollTo({ top, behavior: 'instant' });
         }
         lenis.current?.resize();
-        updateProgress();
+        updateScroll();
       });
     };
 
@@ -115,17 +135,8 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
         sync();
       };
 
-      const hero = select('.hero');
-      const header = select('.site-header');
       let detachHeroMotion: (() => void) | undefined;
-      if (mobile) {
-        gsap.set(header, { position: 'fixed' });
-        gsap.timeline({
-          scrollTrigger: { trigger: hero, start: 'bottom 18%', end: 'bottom top', scrub: true },
-        })
-          .to(header, { yPercent: -104, ease: 'power1.inOut' })
-          .set(header, { visibility: 'hidden' });
-      } else {
+      if (!mobile) {
         const heroStage = select('.hero-stage');
         const camera = select('.hero-camera');
         const travel = 2.54;
@@ -162,8 +173,6 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
           .to(hero, { '--hero-shade': .46, duration: .49, ease: 'power1.inOut' }, .22)
           .to(hero, { '--hero-shade': 0, duration: .86, ease: 'power1.out' }, .71)
           .to(hero, { '--hero-shade': .40, duration: .54, ease: 'power1.inOut' }, 1.82)
-          .to(header, { yPercent: -104, duration: .17, ease: 'power1.inOut' }, 1.57)
-          .set(header, { visibility: 'hidden' }, 1.74)
           .to(hero.querySelectorAll('.scene-wipe i'), {
             scaleY: 1, stagger: .081, duration: .41, ease: 'power1.inOut',
           }, wipeStart);
@@ -433,7 +442,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       });
       if (!mobile) revealDetailGallery();
       pinFinishes();
-      updateProgress();
+      updateScroll();
 
       return () => {
         detachHeroMotion?.();
@@ -457,9 +466,11 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>) {
       disposed = true;
       cancelAnimationFrame(refreshFrame);
       layout.disconnect();
-      window.removeEventListener('scroll', updateProgress);
+      window.removeEventListener('scroll', updateScroll);
       ScrollTrigger.removeEventListener('refresh', updateViewport);
       media.revert();
+      header.removeAttribute('data-hidden');
+      header.removeAttribute('data-past-hero');
     };
   }, [root]);
 
