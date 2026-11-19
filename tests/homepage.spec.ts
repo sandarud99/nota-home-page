@@ -137,10 +137,18 @@ test('desktop Lottie frames, sliding menu and panel wipe follow the scroll in bo
 
   const orderCard = header.locator('.header-order');
   const orderButton = orderCard.getByRole('button');
+  const productName = orderButton.locator('span');
   const hoverFill = 'rgb(255, 34, 0)';
+  const white = 'rgb(255, 255, 255)';
+  const mutedWhite = 'rgba(255, 255, 255, 0.4)';
   await expect(orderButton).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  await expect(orderButton).toHaveCSS('color', white);
+  await expect(productName).toHaveCSS('color', mutedWhite);
   await orderCard.locator('.brand-mark').hover();
   await expect(orderButton).toHaveCSS('background-color', hoverFill);
+  await expect(orderButton).toHaveCSS('color', white);
+  await expect(orderButton.locator('i')).toHaveCSS('color', white);
+  await expect(productName).toHaveCSS('color', mutedWhite);
   await page.mouse.move(735, 380);
   await expect(orderButton).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   const links = header.getByRole('navigation', { name: 'Main navigation' }).getByRole('link');
@@ -158,6 +166,8 @@ test('desktop Lottie frames, sliding menu and panel wipe follow the scroll in bo
   await page.keyboard.press('Tab');
   await expect(orderButton).toBeFocused();
   await expect(orderButton).toHaveCSS('background-color', hoverFill);
+  await expect(orderButton).toHaveCSS('color', white);
+  await expect(productName).toHaveCSS('color', mutedWhite);
   await orderButton.blur();
 
   const paintedFrame = () => motion.locator('canvas').evaluate(canvas => {
