@@ -815,12 +815,14 @@ test('the gallery follows scroll and the blue and nib photos loop on their own',
     const opacity = await alpha(index);
     return opacity > .08 && opacity < .95;
   }).toBe(true);
-  const expectZoomLoop = async (index: number, clip: string) => {
+  const expectZoomLoop = async (index: number, clip: string, peak = 1.34) => {
     const figure = figures.nth(index);
     const artwork = figure.locator('.artwork');
     const photo = artwork.locator('img');
     const scale = () => zoom(index, '.artwork img');
+    const zoomRange = peak - 1;
     await expect(photo).toHaveCSS('animation-iteration-count', 'infinite');
+    await expect(photo).toHaveCSS('animation-duration', '6s');
     await expect(artwork).toHaveCSS('transform', 'none');
     const scrollBeforeZoom = await readScroll(page);
     await photo.evaluate(async node => {
@@ -828,11 +830,11 @@ test('the gallery follows scroll and the blue and nib photos loop on their own',
       await animation.ready;
       animation.currentTime = Number(animation.effect!.getTiming().duration) * .9;
     });
-    await expect.poll(scale).toBeGreaterThan(1.28);
+    await expect.poll(scale).toBeGreaterThan(1 + zoomRange * .83);
     await expect(figure).toHaveCSS('clip-path', clip);
-    await expect.poll(scale).toBeLessThan(1.07);
+    await expect.poll(scale).toBeLessThan(1 + zoomRange * .2);
     await expect(figure).toHaveCSS('clip-path', clip);
-    await expect.poll(scale).toBeGreaterThan(1.08);
+    await expect.poll(scale).toBeGreaterThan(1 + zoomRange * .24);
     expect(await readScroll(page)).toBe(scrollBeforeZoom);
   };
 
@@ -870,7 +872,7 @@ test('the gallery follows scroll and the blue and nib photos loop on their own',
 
   await seek(3, .49);
   await expect(figures.nth(3)).toHaveCSS('opacity', '1');
-  await expectZoomLoop(3, 'inset(0px round 29% / 50%)');
+  await expectZoomLoop(3, 'inset(0px round 29% / 50%)', 2.55);
 
   await seek(5, .70);
   await fading(5);
