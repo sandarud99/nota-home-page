@@ -60,6 +60,8 @@ for (const [width, height, touch] of viewports) {
         const start = (await camera.boundingBox())!.y;
         const header = page.getByRole('banner');
         await expect(header).toHaveCSS('background-image', 'none');
+        await expect(header).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+        await expect(header).toHaveCSS('box-shadow', 'none');
         const travel = height + 24;
         await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), travel);
         await expect.poll(async () => (await camera.boundingBox())!.y).toBeCloseTo(start - travel, 0);
@@ -1079,6 +1081,11 @@ test('mobile navigation and the order dialog support keyboard focus', async ({ p
   await expect(nav).toBeVisible();
   await expect(panel).toHaveCSS('transition-property', /transform/);
   await expect.poll(async () => (await panel.boundingBox())!.y).toBe(0);
+  await expect(page.getByRole('banner')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await expect(panel).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await expect(panel).toHaveCSS('background-image', 'none');
+  await expect(panel).toHaveCSS('box-shadow', 'none');
+  await expect(panel.getByRole('button', { name: /Order Nota One/ })).toHaveCSS('backdrop-filter', 'none');
   await expect(page.locator('#main')).toHaveAttribute('inert', '');
   await expect.poll(() => panel.locator('img').evaluate(image => (image as HTMLImageElement).currentSrc)).toMatch(/order[-_]mobile/);
   await page.keyboard.press('Escape');
@@ -1118,6 +1125,10 @@ test('tablet drawer uses the wide pen image and Smartpaper changes by selection'
   await expect.poll(() => panel.locator('img').evaluate(image => (image as HTMLImageElement).currentSrc)).toMatch(/order[-_]desktop/);
   const order = panel.getByRole('button', { name: /Order Nota One/ });
   await expect(order).toBeInViewport();
+  await expect(order).toHaveCSS('background-color', 'rgb(45, 54, 94)');
+  await expect(order).toHaveCSS('background-image', 'none');
+  await expect(order).toHaveCSS('box-shadow', 'none');
+  await expect(order).toHaveCSS('backdrop-filter', 'none');
   await order.click();
   const dialog = page.getByRole('dialog', { name: 'Stay ahead' });
   await expect(dialog.getByRole('textbox', { name: 'E-mail' })).toBeFocused();
