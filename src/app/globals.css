@@ -123,6 +123,8 @@ img { display: block; }
 .order-button span { color: #aaa; }
 .order-button i { font-style: normal; margin: 0 .57em; }
 .order-button:hover, .inquiry-submit:hover { background: #29292d; }
+.header-order:hover .order-button, .header-order .order-button:focus-visible { background: #991400; }
+.header-order:hover .order-button span, .header-order .order-button:focus-visible span { color: #e2b1a7; }
 .mobile-toggle, .mobile-order, .menu-product, .menu-credits { display: none; }
 
 .scene-wipe, .spec-intro-lines { position: absolute; inset: 0; display: flex; pointer-events: none; }

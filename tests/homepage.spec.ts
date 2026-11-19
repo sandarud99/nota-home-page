@@ -120,6 +120,20 @@ test('desktop Lottie frames, sliding menu and panel wipe follow the scroll in bo
   await expect(camera).toHaveCSS('opacity', '0');
   await expect(panels).toHaveCount(6);
 
+  const orderCard = header.locator('.header-order');
+  const orderButton = orderCard.getByRole('button');
+  const hoverFill = 'rgb(153, 20, 0)';
+  await expect(orderButton).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  await orderCard.locator('.brand-mark').hover();
+  await expect(orderButton).toHaveCSS('background-color', hoverFill);
+  await page.mouse.move(735, 380);
+  await expect(orderButton).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  await header.getByRole('navigation', { name: 'Main navigation' }).getByRole('link').last().focus();
+  await page.keyboard.press('Tab');
+  await expect(orderButton).toBeFocused();
+  await expect(orderButton).toHaveCSS('background-color', hoverFill);
+  await orderButton.blur();
+
   const paintedFrame = () => motion.locator('canvas').evaluate(canvas => {
     const sample = document.createElement('canvas');
     sample.width = 48;
