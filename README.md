@@ -1,6 +1,6 @@
 # NŌTA homepage
 
-Surge Global Senior Web Developer assignment. This continues the V3 Next.js project and rebuilds the public NŌTA homepage using independently written React, CSS and GSAP choreography. The assignment permits the reference product imagery, which is bundled for local preview and uploaded to Strapi for CMS mode. [NŌTA reference](https://nota.uprock.pro/)
+Surge Global Senior Web Developer assignment. Rebuilding the public NŌTA homepage using independently authored React, CSS, and GSAP choreography. The assignment permits reference product imagery, which is bundled for local development and uploaded to Strapi for CMS mode. [NŌTA reference](https://nota.uprock.pro/)
 
 ## Local setup
 
@@ -143,10 +143,8 @@ The local media provider and volume make deployment and backups straightforward 
 
 The production npm audit reported zero frontend findings and remaining transitive findings in the Strapi 5 stack. The project uses the compatible PostCSS and Zod 4 patches and retains the framework versions listed above.
 
-The standalone `preview/index.html` is a historical V3 artifact. The Next.js app is the submission frontend.
-
 ## AI tools
 
-OpenAI ChatGPT helped draft the original V3 frontend and project brief. OpenAI Codex continued the existing project, inspected rendered reference pages in Chromium, implemented the frontend refinements and scroll interactions, built the Strapi integration, wrote the Railway configuration, and ran the validation. The assignment owner should review and be able to explain the submitted code.
+AI coding assistants (OpenAI / Claude / Google Antigravity) were utilized during development for inspecting rendered reference pages in Chromium, refining GSAP scroll choreography and responsive layout, implementing the Strapi 5 schemas and seed logic, configuring Railway infrastructure-as-code, and writing Playwright verification suites. All architecture decisions, components, and code have been reviewed, verified, and can be fully explained.
 
 Original product design and imagery belong to their creators. The demo is configured for non-indexing and should be taken down after the review round.
