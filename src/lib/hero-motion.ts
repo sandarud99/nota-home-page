@@ -14,6 +14,11 @@ export function attachHeroMotion(container: HTMLElement, source: string, timelin
     player?.destroy();
   };
 
+  const fail = () => {
+    reset();
+    container.setAttribute('data-load-failed', '');
+  };
+
   const seek = () => {
     const player = animation;
     if (!player?.isLoaded || player.totalFrames < 1) return;
@@ -54,11 +59,11 @@ export function attachHeroMotion(container: HTMLElement, source: string, timelin
       loop: false,
     });
     animation.addEventListener('DOMLoaded', seek);
-    animation.addEventListener('data_failed', reset);
-    animation.addEventListener('error', reset);
+    animation.addEventListener('data_failed', fail);
+    animation.addEventListener('error', fail);
     seek();
   }).catch(() => {
-    if (!request.signal.aborted) reset();
+    if (!request.signal.aborted) fail();
   });
 
   return () => {
@@ -66,5 +71,6 @@ export function attachHeroMotion(container: HTMLElement, source: string, timelin
     size.disconnect();
     timeline.eventCallback('onUpdate', null);
     reset();
+    container.removeAttribute('data-load-failed');
   };
 }

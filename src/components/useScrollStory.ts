@@ -139,7 +139,7 @@ export function useScrollStory(root: RefObject<HTMLDivElement | null>, initialFi
 
     media.add(desktopMotionQuery, () => {
       const smooth = new Lenis({
-        lerp: 0.16,
+        lerp: 0.13,
         smoothWheel: true,
         syncTouch: false,
         prevent: node => node.classList.contains('paper-caption') && node.scrollHeight > node.clientHeight,

@@ -4,6 +4,7 @@ import { Fragment, useEffect, useRef, useState, type CSSProperties, type FormEve
 import { ArrowLeft, ArrowRight, Grip, X } from 'lucide-react';
 import { mediaUrl, safeHref } from '@/lib/strapi';
 import type { Artwork, BoxItemContent, FormCopy, Heading, Homepage } from '@/lib/strapi';
+import { useHeroIntro } from './useHeroIntro';
 import { compactPageQuery, desktopMotionQuery, useScrollStory } from './useScrollStory';
 
 const phoneImageQuery = '(width < 600px)';
@@ -57,6 +58,19 @@ function Wipe({ panels, className = 'scene-wipe' }: { panels: number; className?
 }
 
 const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+
+function IntroText({ text, delay = 0 }: { text: string; delay?: number }) {
+  return text.split('\n').map((line, lineIndex) => {
+    const letters = Array.from(graphemes.segment(line));
+    const interval = Math.min(27, 430 / Math.max(1, letters.length - 1));
+    return <Fragment key={lineIndex}>
+      {lineIndex > 0 && '\n'}
+      {letters.map(({ segment }, i) => /^\s+$/u.test(segment) ? segment :
+        <span className="intro-letter" key={i}
+          style={{ '--letter-delay': `${delay + lineIndex * 44 + i * interval}ms` } as CSSProperties}>{segment}</span>)}
+    </Fragment>;
+  });
+}
 
 function HighlightText({ text }: { text: string }) {
   return <>
@@ -214,6 +228,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [inquiryOpener, setInquiryOpener] = useState<HTMLButtonElement | null>(null);
   const { active, goToScene, setScrollLocked } = useScrollStory(page, d.colors.length > 1 ? 1 : 0, menuOpen);
+  useHeroIntro(page);
   const orderLabel = `${d.hero.ctaLabel} ${d.hero.priceLabel} • ${d.hero.price}`;
   const uploadedProfile = mediaUrl(d.hero.profileImage);
   const specImage = d.specsArtwork.mobileImage;
@@ -243,10 +258,13 @@ export default function Experience({ data: d }: { data: Homepage }) {
   }
 
   const orderText = <>{d.hero.ctaLabel} <span>{d.hero.priceLabel}</span><i aria-hidden="true">•</i>{d.hero.price}</>;
-  const navigationLinks = d.navigation.map((link, i) => <a href={safeHref(link.href)} key={link.id ?? i}
-    onClick={() => setMenuOpen(false)}>{link.label}</a>);
+  const navigationLinks = (animate = false) => d.navigation.map((link, i) => <a href={safeHref(link.href)} key={link.id ?? i}
+    aria-label={animate ? link.label : undefined} onClick={() => setMenuOpen(false)}>
+    {animate ? <IntroText text={link.label} delay={Math.min(i, 5) * 47} /> : link.label}
+  </a>);
 
-  return <div ref={page}>
+  return <div ref={page} data-intro="loading">
+    <div className="hero-preloader" aria-hidden="true"><span>0%</span></div>
     <a className="skip-link" href="#main" inert={menuOpen}>Skip to content</a>
     <div className="page-progress" aria-hidden="true"><i /></div>
     <header className={`site-header ${menuOpen ? 'menu-open' : ''}`}
@@ -258,14 +276,14 @@ export default function Experience({ data: d }: { data: Homepage }) {
         }
       }}>
       <a className="brand" href="#top" aria-label={`${d.brand} home`} onClick={() => setMenuOpen(false)}>{d.headerWordmark}</a>
-      <nav className="header-navigation" aria-label="Main navigation">{navigationLinks}</nav>
+      <nav className="header-navigation" aria-label="Main navigation">{navigationLinks(true)}</nav>
       <button className="mobile-toggle" ref={menuButton} type="button"
         aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
         aria-controls="homepage-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>
         {menuOpen ? <X size={30} aria-hidden="true" /> : <Grip size={28} aria-hidden="true" />}
       </button>
       <div className="menu-panel" id="homepage-navigation" inert={!menuOpen}>
-        <nav className="header-navigation" aria-label="Main navigation">{navigationLinks}</nav>
+        <nav className="header-navigation" aria-label="Main navigation">{navigationLinks()}</nav>
         <div className="menu-product">
           <ImageView artwork={d.menuArtwork} mobileMedia={phoneImageQuery} />
           <button type="button" className="order-button" onClick={openInquiry}>{orderText}</button>
@@ -286,20 +304,22 @@ export default function Experience({ data: d }: { data: Homepage }) {
     <main id="main" tabIndex={-1} inert={menuOpen}>
       <div id="top" className="hero-stage">
         <section className="hero" aria-labelledby="hero-heading">
-          <div className="hero-camera">
-            {heroProfile && <picture key={heroProfile} className={`hero-profile${uploadedProfile ? '' : ' hero-profile--spec'}`}>
-              <source media={desktopMotionQuery} srcSet={heroProfile} />
-              <img alt="" loading="lazy" decoding="async"
-                ref={image => {
-                  if (image?.complete && image.naturalWidth) image.parentElement?.setAttribute('data-ready', '');
-                }}
-                onLoad={event => event.currentTarget.parentElement?.setAttribute('data-ready', '')}
-                onError={event => event.currentTarget.parentElement?.removeAttribute('data-ready')} />
-            </picture>}
-            <ImageView artwork={d.hero} className="hero-pen" fallback="/art/hero-pen.svg" eager />
+          <div className="hero-art">
+            <div className="hero-camera">
+              {heroProfile && <picture key={heroProfile} className={`hero-profile${uploadedProfile ? '' : ' hero-profile--spec'}`}>
+                <source media={desktopMotionQuery} srcSet={heroProfile} />
+                <img alt="" loading="lazy" decoding="async"
+                  ref={image => {
+                    if (image?.complete && image.naturalWidth) image.parentElement?.setAttribute('data-ready', '');
+                  }}
+                  onLoad={event => event.currentTarget.parentElement?.setAttribute('data-ready', '')}
+                  onError={event => event.currentTarget.parentElement?.removeAttribute('data-ready')} />
+              </picture>}
+              <ImageView artwork={d.hero} className="hero-pen" fallback="/art/hero-pen.svg" eager />
+            </div>
+            {heroAnimation && <div className="hero-motion" data-source={heroAnimation} aria-hidden="true" />}
           </div>
-          {heroAnimation && <div className="hero-motion" data-source={heroAnimation} aria-hidden="true" />}
-          <h1 id="hero-heading" className="hero-title">{d.hero.title}</h1>
+          <h1 id="hero-heading" className="hero-title" aria-label={d.hero.title}><IntroText text={d.hero.title} /></h1>
           <Wipe panels={wipeColumns} />
         </section>
       </div>

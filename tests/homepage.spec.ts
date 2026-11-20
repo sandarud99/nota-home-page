@@ -122,6 +122,53 @@ for (const [width, height, touch] of viewports) {
   });
 }
 
+test('each page load counts to 100 before fading in the pen, header and letters', async ({ page }) => {
+  await page.setViewportSize({ width: 1470, height: 830 });
+  await page.addInitScript(() => {
+    const percentages: number[] = [];
+    const entrance: string[] = [];
+    Reflect.set(window, 'introSamples', { percentages, entrance });
+
+    const observer = new MutationObserver(() => {
+      const counter = document.querySelector('.hero-preloader span');
+      if (!counter) return;
+      const progress = Number.parseInt(counter.textContent ?? '', 10);
+      if (percentages.at(-1) !== progress) percentages.push(progress);
+      if (progress === 100) observer.disconnect();
+    });
+    observer.observe(document, { childList: true, characterData: true, subtree: true });
+    document.addEventListener('animationstart', event => {
+      if (!(event.target instanceof Element)) return;
+      if (event.target.matches('.site-header')) entrance.push('header');
+      if (event.target.matches('.hero-art')) entrance.push('pen');
+      if (event.target.matches('.hero-title .intro-letter')) entrance.push('headline');
+      if (event.target.matches('.header-navigation .intro-letter')) entrance.push('navigation');
+    });
+  });
+
+  for (const navigate of [() => page.goto('/'), () => page.reload()]) {
+    await navigate();
+    const loader = page.locator('.hero-preloader');
+    await expect(loader).toBeVisible();
+    await expect(loader).toBeHidden();
+    await expect(page.locator('[data-intro]')).toHaveCount(0);
+    const { percentages, entrance } = await page.evaluate(() => Reflect.get(window, 'introSamples') as {
+      percentages: number[];
+      entrance: string[];
+    });
+    expect(percentages[0]).toBe(0);
+    expect(percentages.at(-1)).toBe(100);
+    expect(percentages.length).toBeGreaterThan(2);
+    expect(percentages).toEqual([...percentages].sort((a, b) => a - b));
+    expect(new Set(entrance.slice(0, 2))).toEqual(new Set(['header', 'pen']));
+    expect(entrance).toContain('navigation');
+    expect(entrance).toContain('headline');
+    await expect(page.locator('.hero-motion')).toHaveAttribute('data-frame', '0');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName(/Smart pen\s+for real thinking/);
+    await expect(page.getByRole('link', { name: 'Specifications' }).first()).toBeVisible();
+  }
+});
+
 test('desktop Lottie frames, sliding menu and panel wipe follow the scroll in both directions', async ({ page }) => {
   await page.setViewportSize({ width: 1470, height: 762 });
   await page.goto('/');
@@ -154,14 +201,19 @@ test('desktop Lottie frames, sliding menu and panel wipe follow the scroll in bo
   const links = header.getByRole('navigation', { name: 'Main navigation' }).getByRole('link');
   const underline = () => links.first().evaluate(link => {
     const style = getComputedStyle(link, '::after');
-    return { scale: new DOMMatrixReadOnly(style.transform).a, duration: Number.parseFloat(style.transitionDuration) };
+    return {
+      opacity: Number(style.opacity),
+      transform: style.transform,
+      property: style.transitionProperty,
+      duration: Number.parseFloat(style.transitionDuration),
+    };
   });
-  expect((await underline()).scale).toBe(0);
+  expect(await underline()).toMatchObject({ opacity: 0, transform: 'none', property: 'opacity' });
   await links.first().hover();
-  await expect.poll(async () => (await underline()).scale).toBe(1);
+  await expect.poll(async () => (await underline()).opacity).toBe(1);
   expect((await underline()).duration).toBeGreaterThan(0);
   await page.mouse.move(735, 380);
-  await expect.poll(async () => (await underline()).scale).toBe(0);
+  await expect.poll(async () => (await underline()).opacity).toBe(0);
   await links.last().focus();
   await page.keyboard.press('Tab');
   await expect(orderButton).toBeFocused();
@@ -286,6 +338,7 @@ test('desktop hero uses the pen photos when the animation cannot be drawn', asyn
   const hero = page.locator('.hero');
   const camera = hero.locator('.hero-camera');
   const profile = hero.locator('.hero-profile');
+  await expect(page.locator('.hero-preloader')).toBeHidden();
   await expect(hero.locator('.hero-motion canvas')).toHaveCount(0);
   await expect(camera).toHaveCSS('opacity', '1');
   await expect(profile).toHaveAttribute('data-ready', '');
@@ -364,6 +417,7 @@ test('the center-out split hands off to the pinned manifesto and audience fades'
   const width = 1470;
   await page.setViewportSize({ width, height: 805 });
   await page.goto('/');
+  await expect(page.locator('.hero-preloader')).toBeHidden();
   await expect(page.locator('.pin-spacer')).toHaveCount(6);
   const specs = page.locator('.spec-scene');
   const header = page.getByRole('banner');
@@ -451,6 +505,7 @@ test('audience profiles slide in order and the pen zoom gives way to Smartpaper'
   const height = 805;
   await page.setViewportSize({ width, height });
   await page.goto('/');
+  await expect(page.locator('.hero-preloader')).toBeHidden();
   await expect(page.locator('.pin-spacer')).toHaveCount(6);
   const articles = page.locator('.audience-list article');
   const about = page.locator('#about');
@@ -1043,6 +1098,7 @@ test('the last finish reveals the sticky footer and its links stay keyboard acce
   const height = 880;
   await page.setViewportSize({ width: 1469, height });
   await page.goto('/');
+  await expect(page.locator('.hero-preloader')).toBeHidden();
   await expect(page.locator('.pin-spacer')).toHaveCount(6);
   await page.evaluate(() => document.fonts.ready);
 
@@ -1226,6 +1282,8 @@ test('reduced motion exposes every chapter without pinning', async ({ page }) =>
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
+  await expect(page.locator('.hero-preloader')).toBeHidden();
+  await expect(page.locator('.hero-title .intro-letter').last()).toHaveCSS('opacity', '1');
   await expect(page.locator('.pin-spacer')).toHaveCount(0);
   for (const label of ['Writing System', 'Capture Technology', 'Digital Continuity', 'AI-powered structure', 'Your notes. Already there.', 'Inside the box', 'A complete, ready-to-use set', 'Bright Orange.']) {
     await expect(page.getByRole('heading', { name: label })).toBeVisible();
