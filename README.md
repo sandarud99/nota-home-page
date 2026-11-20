@@ -145,6 +145,6 @@ The production npm audit reported zero frontend findings and remaining transitiv
 
 ## AI tools
 
-AI coding assistants (OpenAI / Claude / Google Antigravity) were utilized during development for inspecting rendered reference pages in Chromium, refining GSAP scroll choreography and responsive layout, implementing the Strapi 5 schemas and seed logic, configuring Railway infrastructure-as-code, and writing Playwright verification suites. All architecture decisions, components, and code have been reviewed, verified, and can be fully explained.
+AI coding assistants (OpenAI ChatGPT with Codex and Google Antigravity) were utilized during development for inspecting rendered reference pages in Chromium, refining GSAP scroll choreography and responsive layout, implementing the Strapi 5 schemas and seed logic, configuring Railway infrastructure-as-code, and writing Playwright verification suites. All architecture decisions, components, and code have been reviewed, verified, and can be fully explained.
 
 Original product design and imagery belong to their creators. The demo is configured for non-indexing and should be taken down after the review round.
