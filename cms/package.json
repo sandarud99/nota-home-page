@@ -6,7 +6,7 @@
     "node": ">=22.18 <23"
   },
   "scripts": {
-    "dev": "strapi develop",
+    "dev": "strapi develop --no-watch-admin",
     "build": "strapi build",
     "start": "strapi start",
     "strapi": "strapi"

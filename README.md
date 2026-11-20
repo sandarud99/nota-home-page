@@ -33,6 +33,8 @@ For independent frontend development, run `CONTENT_SOURCE=local npm run dev`. CM
 
 If you have already installed dependencies and generated the local environment files, restart a stopped stack from the repository root with `docker start nota-postgres`, followed by `npm --prefix cms run dev` in one terminal and `npm run dev` in another. Use Node 22 in both terminals. The database and uploads are reused.
 
+The CMS dev command builds the admin panel before starting Strapi. This avoids the duplicate router context that could crash Homepage document actions. Strapi runs in development mode with an editable Content-Type Builder. When updating a running local stack, stop the CMS process, run `npm --prefix cms run dev` again, and reload the admin tab once the server is ready. [Strapi development command](https://docs.strapi.io/cms/cli#strapi-develop)
+
 ### Edit homepage SEO in Strapi
 
 Open **Content Manager → Homepage → Draft → Search and social metadata**. The page title, page description, and social preview image are required. The other fields can be filled or cleared individually.
@@ -104,7 +106,7 @@ npm run test:e2e
 
 The Playwright suite covers 320×640, 390×844, 768×1024, 952×840, 1024×768, 1366×1024, 1440×900 and 1920×1080. It checks image decoding, overflow, desktop pins and wheel reversal, native touch scrolling, drawer controls, scene selectors, keyboard focus, and reduced motion. With an existing production build running, use `TEST_BASE_URL=http://127.0.0.1:3000 npm run test:e2e`. Setting `PLAYWRIGHT_CHANNEL=chrome` uses installed Google Chrome.
 
-The CMS workflow test exercises editor labels, draft isolation, a real media upload, published browser metadata and JSON-LD, and a persisted inquiry from `localhost`. Use a disposable PostgreSQL database for it. Start Strapi with that database’s `DATABASE_URL` and a temporary `STRAPI_PUBLIC_DIR` containing an empty `uploads/` directory. Point the running frontend at that Strapi instance. Set `TEST_CMS_ADMIN_PASSWORD` to a strong password for the synthetic test account, then run the command below. The test restores the original homepage after publishing the test edit.
+The CMS workflow test signs in to Strapi, opens Homepage document actions, and saves and publishes a new SEO title in the editor. It checks draft isolation, image and Lottie uploads, published browser metadata and JSON-LD, and a persisted inquiry from `localhost`. Use a disposable PostgreSQL database for it. Start Strapi with that database’s `DATABASE_URL` and a temporary `STRAPI_PUBLIC_DIR` containing an empty `uploads/` directory. Point the running frontend at that Strapi instance. Set `TEST_CMS_ADMIN_PASSWORD` to a strong password for the synthetic test account, then run the command below. The test restores the original homepage after publishing the test edit.
 
 ```sh
 TEST_BASE_URL=http://127.0.0.1:3000 TEST_CMS_URL=http://127.0.0.1:1337 npm run test:e2e -- tests/cms.spec.ts

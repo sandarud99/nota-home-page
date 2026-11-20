@@ -62,6 +62,28 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
     expect(editor.contentType.metadatas.paperDetails.edit.label).toBe('Smartpaper chapters');
     expect(editor.components['shared.seo'].metadatas.structuredData.edit.label).toBe('Structured data (JSON-LD)');
     expect(editor.components['shared.hero'].metadatas.animation.edit.label).toBe('Desktop Lottie animation');
+
+    const editorPage = await page.context().newPage();
+    const adminErrors: string[] = [];
+    editorPage.on('pageerror', error => adminErrors.push(error.message));
+    editorPage.on('console', message => {
+      if (message.type() === 'error' && message.text().includes('useNavigate()')) {
+        adminErrors.push(message.text());
+      }
+    });
+    await editorPage.goto(new URL('/admin/auth/login', cmsUrl).href);
+    await editorPage.locator('input[name="email"]').fill(adminEmail);
+    await editorPage.locator('input[name="password"]').fill(adminPassword);
+    await editorPage.getByRole('button', { name: 'Login', exact: true }).click();
+    await editorPage.getByRole('link', { name: 'Content Manager', exact: true }).click();
+    await editorPage.getByRole('link', { name: 'Homepage', exact: true }).click();
+    await editorPage.getByRole('button', { name: 'More document actions', exact: true }).first().press('Enter');
+    await expect(editorPage.getByRole('menu')).toBeVisible();
+    await editorPage.keyboard.press('Escape');
+    const skipTour = editorPage.getByRole('button', { name: 'Skip', exact: true });
+    if (await skipTour.isVisible()) await skipTour.click();
+    expect(adminErrors).toEqual([]);
+
     const original = await dataOf<HomepageDraft>(await cms.get(homepagePath, auth));
     const id = randomUUID().slice(0, 8);
     const uploaded = await cms.post('/upload', {
@@ -85,7 +107,6 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
     const title = `Nōta editorial test ${id}`;
     const description = 'An audience description edited from Strapi.';
     const seo = {
-      metaTitle: title,
       metaDescription: 'The homepage description edited in the CMS.',
       canonicalUrl: 'https://nota.example.test/',
       keywords: 'smart pen,  paper notes ,',
@@ -117,11 +138,23 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
         data: {
           headerWordmark: title,
           hero: { id: original.hero.id, image: asset.id, profileImage: asset.id, animation: animation.id, animationEnabled: true },
-          seo: { id: original.seo.id, ...seo },
+          seo: { id: original.seo.id, metaTitle: original.seo.metaTitle, ...seo },
           audienceHeading: { id: original.audienceHeading.id, description },
         },
       });
       await expect(saved).toBeOK();
+
+      await editorPage.reload();
+      const pageTitle = editorPage.getByRole('textbox', { name: /Page title/ });
+      await expect(pageTitle).toHaveValue(original.seo.metaTitle);
+      await pageTitle.fill(title);
+      const saveButton = editorPage.getByRole('button', { name: 'Save', exact: true });
+      await expect(saveButton).toBeEnabled();
+      const [savedInAdmin] = await Promise.all([
+        editorPage.waitForResponse(response => new URL(response.url()).pathname === homepagePath && response.request().method() === 'PUT'),
+        saveButton.click(),
+      ]);
+      expect(savedInAdmin.ok()).toBe(true);
 
       const draftOnly = await apiHomepage();
       expect(draftOnly.headerWordmark).toBe(original.headerWordmark);
@@ -137,7 +170,15 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
       await page.goto(frontendUrl);
       await expect(page).toHaveTitle(original.seo.metaTitle);
 
-      await publish();
+      const publishButton = editorPage.getByRole('button', { name: 'Publish', exact: true });
+      await expect(publishButton).toBeEnabled();
+      const [publishedInAdmin] = await Promise.all([
+        editorPage.waitForResponse(response => new URL(response.url()).pathname === `${homepagePath}/actions/publish` && response.request().method() === 'POST'),
+        publishButton.click(),
+      ]);
+      expect(publishedInAdmin.ok()).toBe(true);
+      expect(adminErrors).toEqual([]);
+      await editorPage.close();
       const response = await page.reload();
       await expect(page.locator('.site-header .brand')).toHaveText(title);
       await expect(page).toHaveTitle(title);
