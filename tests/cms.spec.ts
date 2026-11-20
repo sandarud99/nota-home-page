@@ -289,7 +289,7 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
     await expect(list).toBeOK();
     const { results } = await list.json() as { results: Array<typeof inquiry & { documentId: string }> };
     expect(results).toHaveLength(1);
-    expect(results[0]).toMatchObject({ ...inquiry, name: null, message: null });
+    expect(results[0]).toMatchObject(inquiry);
     await expect(await cms.delete(`${inquiryPath}/${results[0].documentId}`, auth)).toBeOK();
   } finally {
     await cms.dispose();

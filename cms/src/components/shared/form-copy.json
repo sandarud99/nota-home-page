@@ -15,19 +15,9 @@
       "required": true,
       "maxLength": 300
     },
-    "nameLabel": {
-      "type": "string",
-      "private": true,
-      "maxLength": 64
-    },
     "emailLabel": {
       "type": "string",
       "required": true,
-      "maxLength": 64
-    },
-    "messageLabel": {
-      "type": "string",
-      "private": true,
       "maxLength": 64
     },
     "submitLabel": {
@@ -62,10 +52,6 @@
     }
   },
   "config": {
-    "attributes": {
-      "nameLabel": { "hidden": true },
-      "messageLabel": { "hidden": true }
-    },
     "metadatas": {
       "title": {
         "edit": {

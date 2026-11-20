@@ -83,7 +83,7 @@ Content Manager exposes one **Homepage** single type with Draft & Publish and an
 | Box contents and detail gallery | The presentation set, component cards, product overview and annotated macro imagery |
 | Finishes | Chapter images, names, taglines, six-digit background tones and caption contrast |
 | Footer, inquiry copy and SEO | Footer links and credits, form labels and feedback, search metadata, social cards and structured data |
-| Inquiry | Signup email and creation date. Older inquiries can also contain a name and message. |
+| Inquiry | Signup email and creation date. |
 
 Use **Content Manager → Homepage → Draft** to edit the labelled sections. Upload replacement artwork using the Media Library. Artwork has a main image, optional mobile image and editable alt text. Save the draft, then select **Publish** when it is ready to appear on the homepage. Next.js requests `GET /api/public-homepage` with its cache bypassed. Strapi explicitly populates the nested components and images and returns the published document.
 
