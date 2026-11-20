@@ -179,7 +179,7 @@ img { display: block; }
   .site-header.menu-open .menu-panel, .menu-open .menu-panel { transition: transform .95s cubic-bezier(.65, 0, .35, 1), visibility .95s cubic-bezier(.65, 0, .35, 1); transition-delay: 0s; }
 }
 .footer a:hover { text-decoration: underline; text-underline-offset: .25em; }
-.header-order { display: flex; justify-content: space-between; align-items: center; gap: 14px; background: #fff; color: black; border-radius: 4px; padding: 20px; }
+.header-order { display: flex; justify-content: space-between; align-items: center; gap: 14px; background: #fff; color: black; border-radius: 4px; padding: 20px; cursor: pointer; user-select: none; }
 .brand-mark { flex: 0 0 auto; width: 38px; aspect-ratio: 38 / 40; }
 .brand-mark img { object-fit: contain; }
 .order-button { border: 0; border-radius: 4px; background: black; color: white; padding: 0 20px; min-height: 52px; font-weight: 650; letter-spacing: -.03em; white-space: nowrap; }

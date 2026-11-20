@@ -116,7 +116,7 @@ function SceneControls({ index, titles, label, select, arrows = true }: {
   </div>;
 }
 
-function InquiryModal({ copy, opener, close }: { copy: FormCopy; opener: HTMLButtonElement; close: () => void }) {
+function InquiryModal({ copy, opener, close }: { copy: FormCopy; opener: HTMLElement; close: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const email = useRef<HTMLInputElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -226,7 +226,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
   const page = useRef<HTMLDivElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [inquiryOpener, setInquiryOpener] = useState<HTMLButtonElement | null>(null);
+  const [inquiryOpener, setInquiryOpener] = useState<HTMLElement | null>(null);
   const { active, goToScene, setScrollLocked } = useScrollStory(page, d.colors.length > 1 ? 1 : 0, menuOpen);
   useHeroIntro(page);
   const orderLabel = `${d.hero.ctaLabel} ${d.hero.priceLabel} • ${d.hero.price}`;
@@ -247,9 +247,10 @@ export default function Experience({ data: d }: { data: Homepage }) {
     return () => compact.removeEventListener('change', closeAtDesktop);
   }, []);
 
-  function openInquiry(event: MouseEvent<HTMLButtonElement>) {
+  function openInquiry(event: MouseEvent<HTMLElement>) {
     setScrollLocked(true);
-    setInquiryOpener(event.currentTarget);
+    const target = event.currentTarget.querySelector<HTMLElement>('.order-button') ?? event.currentTarget;
+    setInquiryOpener(target);
   }
 
   function closeInquiry() {
@@ -293,7 +294,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
           <div><p>{d.footerProject}</p><p>{d.footerCredit}</p></div>
         </div>
       </div>
-      <div className="header-order">
+      <div className="header-order" onClick={openInquiry}>
         <ImageView artwork={d.brandMark} className="brand-mark" eager />
         <button type="button" className="order-button" aria-label={orderLabel} onClick={openInquiry}>{orderText}</button>
       </div>
