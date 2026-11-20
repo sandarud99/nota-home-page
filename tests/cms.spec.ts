@@ -261,7 +261,7 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
       await expect(await cms.delete(`/upload/files/${animation.id}`, auth)).toBeOK();
     }
 
-    const inquiry = { name: 'Local Test', email: `nota-test-${id}@example.test`, message: 'Checking the locally published Nōta homepage.' };
+    const inquiry = { email: `nota-test-${id}@example.test` };
     const localhost = new URL(frontendUrl);
     localhost.hostname = 'localhost';
     const route = new URL('/api/inquiry', localhost).href;
@@ -269,24 +269,27 @@ test('published CMS edits and uploads appear on the homepage, and localhost inqu
     otherOrigin.port = localhost.port === '3100' ? '3101' : '3100';
     expect((await page.request.post(route, { data: inquiry, headers: { Origin: otherOrigin.origin } })).status()).toBe(403);
     expect((await page.request.post(route, { data: { ...inquiry, website: 'bot' } })).status()).toBe(400);
+    expect((await page.request.post(route, { data: { email: 'invalid-email' } })).status()).toBe(400);
     expect((await cms.get('/api/inquiries')).status()).toBe(404);
 
     await page.goto(localhost.href);
     await page.getByRole('button', { name: /Order Nota One/ }).click();
-    const form = page.getByRole('dialog', { name: 'Stay ahead' });
-    await form.getByRole('textbox', { name: 'Name', exact: true }).fill(inquiry.name);
+    const form = page.getByRole('dialog');
+    await expect(form).toHaveAccessibleName('Stay ahead');
+    await expect(form.getByRole('textbox')).toHaveCount(1);
     await form.getByRole('textbox', { name: 'E-mail' }).fill(inquiry.email);
-    await form.getByRole('textbox', { name: 'Message' }).fill(inquiry.message);
     const submitted = page.waitForResponse(response => response.url() === route && response.request().method() === 'POST');
     await form.getByRole('button', { name: 'Notify me' }).click();
     expect((await submitted).status()).toBe(201);
-    await expect(form.getByRole('status')).toContainText('Your inquiry was received');
+    await expect(form.getByRole('heading')).toHaveText('All set. We’ll keep you posted');
+    await expect(form.getByRole('textbox')).toHaveCount(0);
+    await expect(form.getByRole('button', { name: 'Close' })).toBeFocused();
 
     const list = await cms.get(inquiryPath, { ...auth, params: { 'filters[email][$eq]': inquiry.email } });
     await expect(list).toBeOK();
     const { results } = await list.json() as { results: Array<typeof inquiry & { documentId: string }> };
     expect(results).toHaveLength(1);
-    expect(results[0]).toMatchObject(inquiry);
+    expect(results[0]).toMatchObject({ ...inquiry, name: null, message: null });
     await expect(await cms.delete(`${inquiryPath}/${results[0].documentId}`, auth)).toBeOK();
   } finally {
     await cms.dispose();

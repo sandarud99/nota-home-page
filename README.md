@@ -29,7 +29,7 @@ For independent frontend development, run `CONTENT_SOURCE=local npm run dev`. CM
 
 1. On desktop, scroll through the product chapters and back to see the animations reverse. At a tablet or phone size, open the menu using the middle dots and tap the Smartpaper and finish selectors to change images. [Local homepage](http://127.0.0.1:3000/)
 2. Sign in with your local Strapi admin account. Open **Content Manager → Homepage**, then select **Draft** to edit the content. [Local Strapi admin](http://127.0.0.1:1337/admin)
-3. To verify the form, use the homepage’s order button and send a test message with a test email such as `nota-check@example.test`. Open **Content Manager → Inquiry** in Strapi to see the saved message.
+3. To verify the signup, open the homepage’s order popup and submit a test email such as `nota-check@example.test`. Check the confirmation in the popup and open **Content Manager → Inquiry** in Strapi to see the saved email.
 
 If you have already installed dependencies and generated the local environment files, restart a stopped stack from the repository root with `docker start nota-postgres`, followed by `npm --prefix cms run dev` in one terminal and `npm run dev` in another. Use Node 22 in both terminals. The database and uploads are reused.
 
@@ -83,7 +83,7 @@ Content Manager exposes one **Homepage** single type with Draft & Publish and an
 | Box contents and detail gallery | The presentation set, component cards, product overview and annotated macro imagery |
 | Finishes | Chapter images, names, taglines, six-digit background tones and caption contrast |
 | Footer, inquiry copy and SEO | Footer links and credits, form labels and feedback, search metadata, social cards and structured data |
-| Inquiry | Name, email, message and Strapi-managed creation date |
+| Inquiry | Signup email and creation date. Older inquiries can also contain a name and message. |
 
 Use **Content Manager → Homepage → Draft** to edit the labelled sections. Upload replacement artwork using the Media Library. Artwork has a main image, optional mobile image and editable alt text. Save the draft, then select **Publish** when it is ready to appear on the homepage. Next.js requests `GET /api/public-homepage` with its cache bypassed. Strapi explicitly populates the nested components and images and returns the published document.
 
@@ -91,7 +91,7 @@ In **Hero**, use **Desktop Lottie animation** to replace the default animation w
 
 In **Box contents**, the optional **Hover image** supplies the alternate photo on pointer hover and keyboard focus. The seeded Charging Adapter uses a full view of the adapter. Keep the alternate photo in the same proportions as the primary photo.
 
-Visitors send JSON to `POST /api/inquiry` on Next.js. Both loopback addresses, `localhost` and `127.0.0.1`, work on the configured local frontend port. Both servers validate the fields and honeypot. The proxy caps the request at 24 KiB, authenticates to Strapi with a dedicated shared secret, and returns success after the database write. Strapi allows five valid attempts per IP or email within a minute, with an additional application-wide cap. Open **Content Manager → Inquiry** to see submissions with the newest ones first.
+The early access popup submits an email to `POST /api/inquiry` on Next.js. Its labels, instructions, confirmation and error messages are editable in **Homepage → Inquiry form copy**. Both loopback addresses, `localhost` and `127.0.0.1`, work on the configured local frontend port. Both servers validate the input and honeypot. The proxy caps the request at 24 KiB, authenticates to Strapi with a dedicated shared secret, and returns success after the database write. Strapi allows five valid attempts per IP or email within a minute, with an additional application-wide cap. Open **Content Manager → Inquiry** to see submissions with the newest ones first.
 
 ## Verification
 
@@ -137,7 +137,7 @@ For the under-ten-minute recording, show the three Railway services, their deplo
 
 ## Trade-offs and follow-up
 
-The macro shots use permitted still imagery with desktop scroll motion and time-based zooms. Tablet, phone and reduced-motion visitors see the responsive hero photos. Tablet and phone visitors can browse all four Smartpaper scenes and all five finishes using the chapter controls. The inquiry uses the assignment’s name, email and message fields.
+The macro shots use permitted still imagery with desktop scroll motion and time-based zooms. Tablet, phone and reduced-motion visitors see the responsive hero photos. Tablet and phone visitors can browse all four Smartpaper scenes and all five finishes using the chapter controls.
 
 The local media provider and volume make deployment and backups straightforward for one CMS replica. A larger deployment could move uploads to object storage, use a shared rate limiter, and add visual regression baselines for additional browsers and physical devices.
 

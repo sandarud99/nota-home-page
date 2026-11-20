@@ -13,7 +13,6 @@
   "attributes": {
     "name": {
       "type": "string",
-      "required": true,
       "maxLength": 120,
       "minLength": 2
     },
@@ -24,7 +23,6 @@
     },
     "message": {
       "type": "text",
-      "required": true,
       "maxLength": 3000,
       "minLength": 10
     }
@@ -35,16 +33,16 @@
       "filterable": true,
       "pageSize": 10,
       "searchable": true,
-      "mainField": "name",
+      "mainField": "email",
       "defaultSortBy": "createdAt",
       "defaultSortOrder": "DESC"
     },
     "layouts": {
       "list": [
-        "name",
         "email",
-        "message",
-        "createdAt"
+        "createdAt",
+        "name",
+        "message"
       ]
     },
     "metadatas": {

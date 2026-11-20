@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent } from 'react';
 import { ArrowLeft, ArrowRight, Grip, X } from 'lucide-react';
 import { mediaUrl, safeHref } from '@/lib/strapi';
 import type { Artwork, BoxItemContent, FormCopy, Heading, Homepage } from '@/lib/strapi';
@@ -102,7 +102,7 @@ function SceneControls({ index, titles, label, select, arrows = true }: {
   </div>;
 }
 
-function InquiryModal({ copy, close }: { copy: FormCopy; close: () => void }) {
+function InquiryModal({ copy, opener, close }: { copy: FormCopy; opener: HTMLButtonElement; close: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const email = useRef<HTMLInputElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -112,22 +112,30 @@ function InquiryModal({ copy, close }: { copy: FormCopy; close: () => void }) {
 
   useEffect(() => {
     const panel = dialog.current!;
-    const opener = document.activeElement as HTMLElement | null;
     panel.showModal();
     email.current?.focus({ preventScroll: true });
     return () => {
       panel.close();
-      opener?.focus({ preventScroll: true });
+      opener.focus({ preventScroll: true });
     };
-  }, []);
+  }, [opener]);
 
   useEffect(() => {
-    if (saved) closeButton.current?.focus();
+    if (saved) closeButton.current?.focus({ preventScroll: true });
   }, [saved]);
+
+  async function dismiss() {
+    const panel = dialog.current;
+    if (!panel || panel.hasAttribute('data-closing')) return;
+    panel.setAttribute('data-closing', '');
+    // Keep the dialog modal and hold the scroll lock through the exit transition.
+    await Promise.allSettled(panel.getAnimations({ subtree: true }).map(animation => animation.finished));
+    if (dialog.current === panel) close();
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (sending) return;
+    if (sending || dialog.current?.hasAttribute('data-closing')) return;
     const body = Object.fromEntries(new FormData(event.currentTarget));
     setSending(true);
     setFeedback('');
@@ -146,12 +154,13 @@ function InquiryModal({ copy, close }: { copy: FormCopy; close: () => void }) {
     }
   }
 
-  return <dialog ref={dialog} className="inquiry-dialog" aria-labelledby="inquiry-title" data-lenis-prevent
-    onCancel={event => { event.preventDefault(); close(); }}
-    onClick={event => { if (event.target === event.currentTarget) close(); }}
+  return <dialog ref={dialog} className="inquiry-dialog" aria-labelledby="inquiry-title"
+    aria-describedby={saved ? undefined : 'inquiry-description'} data-lenis-prevent
+    onCancel={event => { event.preventDefault(); void dismiss(); }}
+    onClick={event => { if (event.target === event.currentTarget) void dismiss(); }}
     onKeyDown={event => {
       if (event.key !== 'Tab') return;
-      const controls = Array.from(dialog.current!.querySelectorAll<HTMLElement>('button:not(:disabled), input:not([tabindex="-1"]), textarea'));
+      const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), input:not([tabindex="-1"])'));
       const first = controls[0];
       const last = controls.at(-1);
       if (event.shiftKey && document.activeElement === first) {
@@ -163,21 +172,22 @@ function InquiryModal({ copy, close }: { copy: FormCopy; close: () => void }) {
       }
     }}>
     <div className="dialog-panel">
-      <h2 id="inquiry-title">{copy.title}</h2>
-      {saved ? <p className="form-success" role="status">{copy.successMessage}</p> : <>
-        <p className="form-intro">{copy.description}</p>
+      <h2 id="inquiry-title">{saved ? copy.successMessage : copy.title}</h2>
+      {!saved && <>
+        <p id="inquiry-description" className="form-intro">{copy.description}</p>
         <form className="inquiry-form" onSubmit={submit}>
-          <label><span>{copy.emailLabel}</span><input type="email" name="email" ref={email} required maxLength={254} autoComplete="email" /></label>
-          <label><span>{copy.nameLabel}</span><input type="text" name="name" required minLength={2} maxLength={120} autoComplete="name" /></label>
-          <label><span>{copy.messageLabel}</span><textarea name="message" required minLength={10} maxLength={3000} rows={2} /></label>
+          <label>
+            <span className="sr-only">{copy.emailLabel}</span>
+            <input type="email" name="email" ref={email} placeholder={copy.emailLabel} required maxLength={254} autoComplete="email" />
+          </label>
           <input className="honeypot" aria-hidden="true" type="text" name="website" tabIndex={-1} autoComplete="off" />
           <button type="submit" className="inquiry-submit" disabled={sending}>
             {sending ? copy.sendingLabel : copy.submitLabel}<span aria-hidden="true">•</span>
           </button>
-          <p className="form-feedback" role="status">{feedback}</p>
         </form>
       </>}
-      <button type="button" className="inquiry-close" ref={closeButton} onClick={close}>{copy.closeLabel}</button>
+      <p className={saved ? 'sr-only' : 'form-feedback'} role="status">{saved ? copy.successMessage : feedback}</p>
+      <button type="button" className="inquiry-close" ref={closeButton} onClick={dismiss}>{copy.closeLabel}</button>
     </div>
   </dialog>;
 }
@@ -202,7 +212,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
   const page = useRef<HTMLDivElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [inquiryOpen, setInquiryOpen] = useState(false);
+  const [inquiryOpener, setInquiryOpener] = useState<HTMLButtonElement | null>(null);
   const { active, goToScene, setScrollLocked } = useScrollStory(page, d.colors.length > 1 ? 1 : 0, menuOpen);
   const orderLabel = `${d.hero.ctaLabel} ${d.hero.priceLabel} • ${d.hero.price}`;
   const uploadedProfile = mediaUrl(d.hero.profileImage);
@@ -222,14 +232,14 @@ export default function Experience({ data: d }: { data: Homepage }) {
     return () => compact.removeEventListener('change', closeAtDesktop);
   }, []);
 
-  function openInquiry() {
+  function openInquiry(event: MouseEvent<HTMLButtonElement>) {
     setScrollLocked(true);
-    setInquiryOpen(true);
+    setInquiryOpener(event.currentTarget);
   }
 
   function closeInquiry() {
     setScrollLocked(false);
-    setInquiryOpen(false);
+    setInquiryOpener(null);
   }
 
   const orderText = <>{d.hero.ctaLabel} <span>{d.hero.priceLabel}</span><i aria-hidden="true">•</i>{d.hero.price}</>;
@@ -241,7 +251,7 @@ export default function Experience({ data: d }: { data: Homepage }) {
     <div className="page-progress" aria-hidden="true"><i /></div>
     <header className={`site-header ${menuOpen ? 'menu-open' : ''}`}
       onKeyDown={event => {
-        if (event.key === 'Escape' && menuOpen && !inquiryOpen) {
+        if (event.key === 'Escape' && menuOpen && !inquiryOpener) {
           event.preventDefault();
           setMenuOpen(false);
           requestAnimationFrame(() => menuButton.current?.focus({ preventScroll: true }));
@@ -405,6 +415,6 @@ export default function Experience({ data: d }: { data: Homepage }) {
       <ImageView artwork={{ ...d.brandMark, alt: '' }} />
       <span>{d.brand}</span>
     </div>
-    {inquiryOpen && <InquiryModal copy={d.formCopy} close={closeInquiry} />}
+    {inquiryOpener && <InquiryModal copy={d.formCopy} opener={inquiryOpener} close={closeInquiry} />}
   </div>;
 }

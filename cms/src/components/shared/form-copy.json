@@ -2,7 +2,7 @@
   "collectionName": "components_shared_form_copy",
   "info": {
     "displayName": "Inquiry form",
-    "description": "Labels and feedback for the early access inquiry form."
+    "description": "Labels and feedback for the early access signup."
   },
   "attributes": {
     "title": {
@@ -17,7 +17,7 @@
     },
     "nameLabel": {
       "type": "string",
-      "required": true,
+      "private": true,
       "maxLength": 64
     },
     "emailLabel": {
@@ -27,7 +27,7 @@
     },
     "messageLabel": {
       "type": "string",
-      "required": true,
+      "private": true,
       "maxLength": 64
     },
     "submitLabel": {
@@ -62,6 +62,10 @@
     }
   },
   "config": {
+    "attributes": {
+      "nameLabel": { "hidden": true },
+      "messageLabel": { "hidden": true }
+    },
     "metadatas": {
       "title": {
         "edit": {
@@ -73,19 +77,9 @@
           "label": "Dialog introduction"
         }
       },
-      "nameLabel": {
-        "edit": {
-          "label": "Name label"
-        }
-      },
       "emailLabel": {
         "edit": {
           "label": "Email label"
-        }
-      },
-      "messageLabel": {
-        "edit": {
-          "label": "Message label"
         }
       },
       "submitLabel": {

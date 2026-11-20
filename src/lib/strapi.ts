@@ -40,9 +40,7 @@ export type Finish = SectionItem & { tone: string; darkText?: boolean };
 export type FormCopy = {
   title: string;
   description: string;
-  nameLabel: string;
   emailLabel: string;
-  messageLabel: string;
   submitLabel: string;
   closeLabel: string;
   sendingLabel: string;

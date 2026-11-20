@@ -1128,6 +1128,8 @@ test('mobile navigation and the order dialog support keyboard focus', async ({ p
   await order.click();
   const dialog = page.getByRole('dialog', { name: 'Stay ahead' });
   const email = dialog.getByRole('textbox', { name: 'E-mail' });
+  await expect(dialog.getByRole('textbox')).toHaveCount(1);
+  await expect(email).toHaveAttribute('placeholder', 'E-mail');
   await expect(email).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(dialog.getByRole('button', { name: 'Close' })).toBeFocused();
@@ -1137,6 +1139,50 @@ test('mobile navigation and the order dialog support keyboard focus', async ({ p
   await expect(email).toBeFocused();
   expect(await email.evaluate(input => (input as HTMLInputElement).validity.valueMissing)).toBe(true);
   await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(order).toBeFocused();
+});
+
+test('the signup panel and backdrop fade in and out while focus stays in the dialog', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await page.evaluate(() => {
+    document.addEventListener('transitionrun', event => {
+      const panel = event.target;
+      if (!(panel instanceof HTMLDialogElement) || !panel.matches('.inquiry-dialog') || event.propertyName !== 'opacity') return;
+      const phase = panel.hasAttribute('data-closing') ? 'exit' : 'entry';
+      const surface = event.pseudoElement === '::backdrop' ? 'backdrop' : 'panel';
+      document.body.setAttribute(`data-${surface}-${phase}`, String(panel.open));
+    });
+  });
+
+  const order = page.getByRole('button', { name: /Order Nota One/ });
+  const dialog = page.getByRole('dialog');
+  const body = page.locator('body');
+  await order.click();
+  await expect(body).toHaveAttribute('data-panel-entry', 'true');
+  await expect(body).toHaveAttribute('data-backdrop-entry', 'true');
+  await expect(dialog).toHaveCSS('opacity', '1');
+  await expect(body).toHaveCSS('overflow', 'hidden');
+
+  await page.route('**/api/inquiry', route => route.fulfill({ status: 503 }));
+  const email = dialog.getByRole('textbox', { name: 'E-mail' });
+  await email.fill('signup-test@example.test');
+  await dialog.getByRole('button', { name: 'Notify me' }).click();
+  await expect(dialog.getByRole('status')).toContainText('Please try again');
+  await expect(email).toHaveValue('signup-test@example.test');
+
+  await page.mouse.click(5, 5);
+  await expect(body).toHaveAttribute('data-panel-exit', 'true');
+  await expect(body).toHaveAttribute('data-backdrop-exit', 'true');
+  await expect(dialog).toBeHidden();
+  await expect(body).not.toHaveCSS('overflow', 'hidden');
+  await expect(order).toBeFocused();
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await order.click();
+  await expect(dialog).toHaveCSS('transition-duration', '0s');
+  await dialog.getByRole('button', { name: 'Close' }).click();
   await expect(dialog).toBeHidden();
   await expect(order).toBeFocused();
 });
