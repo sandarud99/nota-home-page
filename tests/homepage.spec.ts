@@ -632,8 +632,10 @@ test('Smartpaper scales the chapter images, keeps the glass captions, and fades 
   const glass = slides.nth(2).locator('.paper-caption');
   await expect(glass.getByRole('heading', { name: 'AI-powered structure' })).toBeVisible();
   for (const child of ['h4', 'p']) {
-    await expect(glass.locator(child)).toHaveCSS('backdrop-filter', 'blur(33.075px)');
-    await expect(glass.locator(child)).toHaveCSS('background-color', 'rgba(255, 255, 255, 0.05)');
+    const panel = glass.locator(child);
+    await expect(panel).toHaveCSS('backdrop-filter', 'blur(24.99px)');
+    await expect(panel).toHaveCSS('background-color', 'rgba(255, 255, 255, 0.05)');
+    await expect(panel).toHaveCSS('text-shadow', 'none');
   }
 
   const finalTitle = slides.last().locator('.paper-title');
