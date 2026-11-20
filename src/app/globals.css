@@ -297,6 +297,7 @@ img { display: block; }
 .paper-slide .chapter-copy { z-index: 2; }
 .paper-title { position: absolute; top: clamp(22px, 4.95svh, 65px); left: var(--gutter); max-width: 58%; white-space: pre-line; font: 400 clamp(36px, 4vw, 75px)/1.05 var(--serif); letter-spacing: -.046em; text-shadow: 0 1px 6px #0009; }
 .paper-caption {
+  --paper-caption-blur: clamp(24px, 2.25vw, 42px);
   position: absolute;
   right: var(--gutter);
   bottom: var(--paper-bottom);
@@ -312,9 +313,10 @@ img { display: block; }
 .paper-caption > * {
   padding: clamp(18px, 2.1vw, 37px);
   border-radius: clamp(11px, 1.12vw, 22px);
-  background: rgb(255 255 255 / .055);
-  backdrop-filter: blur(24px);
-  text-shadow: 0 1px 4px #0004;
+  background: rgb(255 255 255 / .05);
+  -webkit-backdrop-filter: blur(var(--paper-caption-blur));
+  backdrop-filter: blur(var(--paper-caption-blur));
+  text-shadow: 0 1px 5px rgb(0 0 0 / .55);
 }
 .paper-caption h4 { font-size: clamp(17px, 1.48vw, 28px); font-weight: 730; line-height: 1.05; letter-spacing: -.057em; }
 .paper-caption p { font-size: clamp(13px, 1.082vw, 20px); font-weight: 600; line-height: 1.32; letter-spacing: -.0415em; }
