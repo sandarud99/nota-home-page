@@ -24,8 +24,7 @@ img { display: block; }
 .sr-only, .honeypot { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
 .skip-link { position: fixed; z-index: 100; top: 12px; left: 12px; padding: 14px 18px; background: white; color: black; transform: translateY(-200%); }
 .skip-link:focus { transform: none; }
-.page-progress { position: fixed; z-index: 30; top: 0; right: 0; width: 2px; height: var(--scene-height); pointer-events: none; color: #fff; mix-blend-mode: difference; }
-.page-progress i { display: block; height: 100%; opacity: .48; background: currentColor; transform: scaleY(var(--progress, 0)); transform-origin: top; }
+.page-progress { display: none !important; }
 #main { position: relative; z-index: 1; background: white; }
 
 .hero-preloader { display: none; }
