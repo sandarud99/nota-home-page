@@ -28,7 +28,7 @@ function previewImage(file?: Media | null, alt?: string | null, localUrl?: strin
 export async function generateMetadata(): Promise<Metadata> {
   const robots = { index: false, follow: false, googleBot: { index: false, follow: false } };
   try {
-    const { seo, brand, brandMark } = await getHomepage();
+    const { seo, brand } = await getHomepage();
     const canonical = canonicalHref(seo.canonicalUrl);
     const ogTitle = seo.ogTitle?.trim() || seo.metaTitle;
     const ogDescription = seo.ogDescription?.trim() || seo.metaDescription;
@@ -37,7 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
       ...ogImage,
       alt: seo.twitterImageAlt?.trim() || ogImage.alt,
     });
-    const icon = mediaUrl(seo.siteIcon) || mediaUrl(brandMark.image, brandMark.imageUrl);
+    const icon = mediaUrl(seo.siteIcon) || '/favicon.svg';
     const bingVerification = seo.bingVerification?.trim();
     return {
       title: seo.metaTitle,
@@ -61,7 +61,10 @@ export async function generateMetadata(): Promise<Metadata> {
         description: seo.twitterDescription?.trim() || ogDescription,
         images: twitterImage ? [twitterImage] : [],
       },
-      icons: icon ? { icon } : undefined,
+      icons: {
+        icon: [{ url: icon, type: 'image/svg+xml' }],
+        apple: [{ url: icon }],
+      },
       verification: {
         google: seo.googleVerification?.trim() || undefined,
         other: bingVerification ? { 'msvalidate.01': bingVerification } : undefined,
